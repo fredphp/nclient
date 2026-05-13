@@ -5529,51 +5529,42 @@ cc.Class({
         var nicknameY = nicknameNode ? nicknameNode.y : 43;
         var nicknameX = nicknameNode ? nicknameNode.x : 140;
         
-        // 隐藏原来的金豆图标和金框（我们将创建新的显示）
+        // 隐藏原来的金豆图标、金框和原来的金币显示节点（避免重复显示）
         var yuanbaoIcon = playerNode.getChildByName("yuanbaoIcon");
         var goldFrame = playerNode.getChildByName("gold_frame");
+        var oldGobalLabel = playerNode.getChildByName("gobal_count_label");
         if (yuanbaoIcon) yuanbaoIcon.active = false;
         if (goldFrame) goldFrame.active = false;
+        if (oldGobalLabel) oldGobalLabel.active = false;  // 隐藏原来的金币显示，避免重复
         
-        // 创建欢乐豆显示容器
-        var happyBeanContainer = this._createCurrencyDisplayNode(
+        // 创建货币显示容器（欢乐豆和竞技币放在同一行）
+        var currencyContainer = this._createCurrencyContainerRow(
             playerNode, 
-            "happy_bean_display", 
-            "欢乐豆", 
+            "currency_display_row", 
             nicknameX - 5,
-            nicknameY - 35,  // 用户名下方
-            cc.color(255, 215, 0)  // 金色
-        );
-        
-        // 创建竞技币显示容器
-        var arenaCoinContainer = this._createCurrencyDisplayNode(
-            playerNode, 
-            "arena_coin_display", 
-            "竞技币", 
-            nicknameX - 5,
-            nicknameY - 70,  // 欢乐豆下方
-            cc.color(100, 200, 255)  // 蓝色
+            nicknameY - 35  // 用户名下方一行
         );
         
         // 存储引用，方便后续更新
-        this._happyBeanLabelNode = happyBeanContainer ? happyBeanContainer.getChildByName("value_label") : null;
-        this._arenaCoinLabelNode = arenaCoinContainer ? arenaCoinContainer.getChildByName("value_label") : null;
+        this._happyBeanLabelNode = currencyContainer ? currencyContainer.happyBeanLabel : null;
+        this._arenaCoinLabelNode = currencyContainer ? currencyContainer.arenaCoinLabel : null;
         
         // 立即更新显示值
         this._updateBothCurrencyDisplay();
     },
     
-    // 【新增】创建货币显示节点
-    // name: 节点名称
-    // labelText: 标签文字（如"欢乐豆"、"竞技币"）
-    // x, y: 位置
-    // color: 颜色
-    _createCurrencyDisplayNode: function(parentNode, name, labelText, x, y, color) {
+    // 【新增】创建货币显示容器（欢乐豆和竞技币放在同一行）
+    _createCurrencyContainerRow: function(parentNode, name, x, y) {
         if (!parentNode) return null;
         
         // 检查是否已存在
         var existing = parentNode.getChildByName(name);
-        if (existing) return existing;
+        if (existing) {
+            return {
+                happyBeanLabel: existing.getChildByName("happy_bean_value"),
+                arenaCoinLabel: existing.getChildByName("arena_coin_value")
+            };
+        }
         
         // 创建容器节点
         var container = new cc.Node(name);
@@ -5583,47 +5574,93 @@ cc.Class({
         container.zIndex = 100;
         container.parent = parentNode;
         
-        // 创建标签文字（如"欢乐豆:"）
-        var labelNode = new cc.Node("name_label");
-        labelNode.anchorX = 0;
-        labelNode.anchorY = 0.5;
-        labelNode.x = 0;
-        labelNode.y = 0;
-        var label = labelNode.addComponent(cc.Label);
-        label.string = labelText + ": ";
-        label.fontSize = 18;
-        label.lineHeight = 24;
-        label.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
-        labelNode.color = color;
+        // ========== 欢乐豆显示 ==========
+        // 欢乐豆标签
+        var happyBeanNameLabel = new cc.Node("happy_bean_name");
+        happyBeanNameLabel.anchorX = 0;
+        happyBeanNameLabel.anchorY = 0.5;
+        happyBeanNameLabel.x = 0;
+        happyBeanNameLabel.y = 0;
+        var happyBeanName = happyBeanNameLabel.addComponent(cc.Label);
+        happyBeanName.string = "欢乐豆:";
+        happyBeanName.fontSize = 16;
+        happyBeanName.lineHeight = 20;
+        happyBeanName.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        happyBeanNameLabel.color = cc.color(255, 215, 0);  // 金色
+        var outline1 = happyBeanNameLabel.addComponent(cc.LabelOutline);
+        outline1.color = cc.color(0, 0, 0);
+        outline1.width = 1;
+        happyBeanNameLabel.parent = container;
         
-        // 添加描边
-        var outline = labelNode.addComponent(cc.LabelOutline);
-        outline.color = cc.color(0, 0, 0);
-        outline.width = 1;
+        // 欢乐豆数值
+        var happyBeanValueLabel = new cc.Node("happy_bean_value");
+        happyBeanValueLabel.anchorX = 0;
+        happyBeanValueLabel.anchorY = 0.5;
+        happyBeanValueLabel.x = 60;  // 欢乐豆标签后面
+        happyBeanValueLabel.y = 0;
+        var happyBeanValue = happyBeanValueLabel.addComponent(cc.Label);
+        happyBeanValue.string = "0";
+        happyBeanValue.fontSize = 16;
+        happyBeanValue.lineHeight = 20;
+        happyBeanValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        happyBeanValueLabel.color = cc.color(255, 255, 255);
+        var outline2 = happyBeanValueLabel.addComponent(cc.LabelOutline);
+        outline2.color = cc.color(0, 0, 0);
+        outline2.width = 1;
+        happyBeanValueLabel.parent = container;
         
-        labelNode.parent = container;
+        // ========== 分隔符 ==========
+        var separator = new cc.Node("separator");
+        separator.anchorX = 0;
+        separator.anchorY = 0.5;
+        separator.x = 130;  // 欢乐豆数值后面
+        separator.y = 0;
+        var sepLabel = separator.addComponent(cc.Label);
+        sepLabel.string = "  |  ";
+        sepLabel.fontSize = 14;
+        sepLabel.lineHeight = 20;
+        separator.color = cc.color(180, 180, 180);
+        separator.parent = container;
         
-        // 创建数值显示
-        var valueNode = new cc.Node("value_label");
-        valueNode.anchorX = 0;
-        valueNode.anchorY = 0.5;
-        valueNode.x = labelText.length * 18 + 10;  // 根据标签文字长度计算位置
-        valueNode.y = 0;
-        var valueLabel = valueNode.addComponent(cc.Label);
-        valueLabel.string = "0";
-        valueLabel.fontSize = 18;
-        valueLabel.lineHeight = 24;
-        valueLabel.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
-        valueNode.color = cc.color(255, 255, 255);
+        // ========== 竞技币显示 ==========
+        // 竞技币标签
+        var arenaCoinNameLabel = new cc.Node("arena_coin_name");
+        arenaCoinNameLabel.anchorX = 0;
+        arenaCoinNameLabel.anchorY = 0.5;
+        arenaCoinNameLabel.x = 165;  // 分隔符后面
+        arenaCoinNameLabel.y = 0;
+        var arenaCoinName = arenaCoinNameLabel.addComponent(cc.Label);
+        arenaCoinName.string = "竞技币:";
+        arenaCoinName.fontSize = 16;
+        arenaCoinName.lineHeight = 20;
+        arenaCoinName.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        arenaCoinNameLabel.color = cc.color(100, 200, 255);  // 蓝色
+        var outline3 = arenaCoinNameLabel.addComponent(cc.LabelOutline);
+        outline3.color = cc.color(0, 0, 0);
+        outline3.width = 1;
+        arenaCoinNameLabel.parent = container;
         
-        // 添加描边
-        var valueOutline = valueNode.addComponent(cc.LabelOutline);
-        valueOutline.color = cc.color(0, 0, 0);
-        valueOutline.width = 1;
+        // 竞技币数值
+        var arenaCoinValueLabel = new cc.Node("arena_coin_value");
+        arenaCoinValueLabel.anchorX = 0;
+        arenaCoinValueLabel.anchorY = 0.5;
+        arenaCoinValueLabel.x = 225;  // 竞技币标签后面
+        arenaCoinValueLabel.y = 0;
+        var arenaCoinValue = arenaCoinValueLabel.addComponent(cc.Label);
+        arenaCoinValue.string = "0";
+        arenaCoinValue.fontSize = 16;
+        arenaCoinValue.lineHeight = 20;
+        arenaCoinValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        arenaCoinValueLabel.color = cc.color(255, 255, 255);
+        var outline4 = arenaCoinValueLabel.addComponent(cc.LabelOutline);
+        outline4.color = cc.color(0, 0, 0);
+        outline4.width = 1;
+        arenaCoinValueLabel.parent = container;
         
-        valueNode.parent = container;
-        
-        return container;
+        return {
+            happyBeanLabel: happyBeanValueLabel,
+            arenaCoinLabel: arenaCoinValueLabel
+        };
     },
     
     // 【新增】同时更新欢乐豆和竞技币显示
