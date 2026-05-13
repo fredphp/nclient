@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "icon_wechat",
+    "texture": "cc69a33a-de02-4f94-aefb-062d59b87cc4",
+    "atlas": "",
+    "rect": [
+      9,
+      5,
+      25,
+      39
+    ],
+    "offset": [
+      -2.5,
+      -0.5
+    ],
+    "originalSize": [
+      48,
+      48
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

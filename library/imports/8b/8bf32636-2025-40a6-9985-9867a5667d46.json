@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "btn_mobile_login",
+    "texture": "873bbe5e-a684-4d55-ad57-53d658f62bf6",
+    "atlas": "",
+    "rect": [
+      46,
+      14,
+      248,
+      17
+    ],
+    "offset": [
+      0,
+      2.5
+    ],
+    "originalSize": [
+      340,
+      50
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

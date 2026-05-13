@@ -1,1 +1,0 @@
-window.eventLister=function(n){var r={};return n.on=function(n,e){r.hasOwnProperty(n)?r[n].push(e):r[n]=[e]},n.fire=function(n){if(r.hasOwnProperty(n))for(var e=r[n],t=0;t<e.length;++t){for(var o=e[t],i=[],f=1;f<arguments.length;++f)i.push(arguments[f]);o.apply(this,i)}},n.removeLister=function(n){r[n]=[]},n.removeAllLister=function(){r={}},n};
