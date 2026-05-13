@@ -5529,6 +5529,11 @@ cc.Class({
         var nicknameY = nicknameNode ? nicknameNode.y : 43;
         var nicknameX = nicknameNode ? nicknameNode.x : 140;
         
+        // 【调整】将用户昵称往上移动一点，减少拥挤感
+        if (nicknameNode) {
+            nicknameNode.y = nicknameY + 12;  // 往上移动12像素
+        }
+        
         // 隐藏原来的金豆图标、金框和原来的金币显示节点（避免重复显示）
         var yuanbaoIcon = playerNode.getChildByName("yuanbaoIcon");
         var goldFrame = playerNode.getChildByName("gold_frame");
@@ -5542,7 +5547,7 @@ cc.Class({
             playerNode, 
             "currency_display_row", 
             nicknameX - 5,
-            nicknameY - 35  // 用户名下方一行
+            nicknameY - 30  // 用户名下方一行（调整位置）
         );
         
         // 存储引用，方便后续更新
@@ -5553,7 +5558,7 @@ cc.Class({
         this._updateBothCurrencyDisplay();
     },
     
-    // 【新增】创建货币显示容器（欢乐豆和竞技币放在同一行，使用图标）
+    // 【新增】创建货币显示容器（欢乐豆和竞技币放在同一行，使用圆形图标）
     _createCurrencyContainerRow: function(parentNode, name, x, y) {
         var self = this;
         if (!parentNode) return null;
@@ -5576,38 +5581,54 @@ cc.Class({
         container.parent = parentNode;
         
         // 字体大小配置
-        var valueFontSize = 20;  // 数字字体大小（调大）
-        var iconScale = 0.8;     // 图标缩放比例
+        var valueFontSize = 22;  // 数字字体大小（调大）
+        var iconSize = 22;       // 图标大小
         
-        // ========== 欢乐豆显示（使用图标）==========
-        // 欢乐豆图标
+        // ========== 欢乐豆显示（使用圆形图标）==========
+        // 欢乐豆图标 - 黄色圆形带"豆"字
         var happyBeanIcon = new cc.Node("happy_bean_icon");
         happyBeanIcon.anchorX = 0;
         happyBeanIcon.anchorY = 0.5;
         happyBeanIcon.x = 0;
         happyBeanIcon.y = 0;
-        var happyBeanSprite = happyBeanIcon.addComponent(cc.Sprite);
-        happyBeanSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-        happyBeanIcon.setContentSize(24, 24);  // 图标大小
+        happyBeanIcon.setContentSize(iconSize, iconSize);
+        
+        // 绘制黄色圆形背景
+        var happyBeanGraphics = happyBeanIcon.addComponent(cc.Graphics);
+        happyBeanGraphics.fillColor = cc.color(255, 200, 50);  // 金黄色
+        happyBeanGraphics.circle(0, 0, iconSize / 2);
+        happyBeanGraphics.fill();
+        // 绘制边框
+        happyBeanGraphics.strokeColor = cc.color(200, 150, 0);
+        happyBeanGraphics.lineWidth = 1.5;
+        happyBeanGraphics.circle(0, 0, iconSize / 2 - 1);
+        happyBeanGraphics.stroke();
         happyBeanIcon.parent = container;
         
-        // 加载欢乐豆图标（yuanbaoIcon）
-        cc.resources.load('UI/yuanbaoIcon', cc.SpriteFrame, function(err, spriteFrame) {
-            if (!err && spriteFrame && happyBeanSprite) {
-                happyBeanSprite.spriteFrame = spriteFrame;
-            }
-        });
+        // 欢乐豆图标上的"豆"字
+        var happyBeanTextNode = new cc.Node("text");
+        happyBeanTextNode.anchorX = 0.5;
+        happyBeanTextNode.anchorY = 0.5;
+        happyBeanTextNode.x = 0;
+        happyBeanTextNode.y = 0;
+        var happyBeanText = happyBeanTextNode.addComponent(cc.Label);
+        happyBeanText.string = "豆";
+        happyBeanText.fontSize = 14;
+        happyBeanText.lineHeight = 16;
+        happyBeanText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        happyBeanTextNode.color = cc.color(139, 69, 19);  // 深棕色文字
+        happyBeanTextNode.parent = happyBeanIcon;
         
         // 欢乐豆数值
         var happyBeanValueLabel = new cc.Node("happy_bean_value");
         happyBeanValueLabel.anchorX = 0;
         happyBeanValueLabel.anchorY = 0.5;
-        happyBeanValueLabel.x = 28;  // 图标后面
+        happyBeanValueLabel.x = iconSize + 4;  // 图标后面
         happyBeanValueLabel.y = 0;
         var happyBeanValue = happyBeanValueLabel.addComponent(cc.Label);
         happyBeanValue.string = "0";
         happyBeanValue.fontSize = valueFontSize;
-        happyBeanValue.lineHeight = 26;
+        happyBeanValue.lineHeight = 28;
         happyBeanValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
         happyBeanValueLabel.color = cc.color(255, 255, 255);
         var outline2 = happyBeanValueLabel.addComponent(cc.LabelOutline);
@@ -5619,46 +5640,60 @@ cc.Class({
         var separator = new cc.Node("separator");
         separator.anchorX = 0;
         separator.anchorY = 0.5;
-        separator.x = 100;  // 欢乐豆数值后面
+        separator.x = iconSize + 75;  // 欢乐豆数值后面
         separator.y = 0;
         var sepLabel = separator.addComponent(cc.Label);
         sepLabel.string = "|";
         sepLabel.fontSize = 18;
-        sepLabel.lineHeight = 26;
+        sepLabel.lineHeight = 28;
         separator.color = cc.color(150, 150, 150);
         separator.parent = container;
         
-        // ========== 竞技币显示（使用图标）==========
-        // 竞技币图标
+        // ========== 竞技币显示（使用圆形图标）==========
+        // 竞技币图标 - 绿色圆形带"币"字
         var arenaCoinIcon = new cc.Node("arena_coin_icon");
         arenaCoinIcon.anchorX = 0;
         arenaCoinIcon.anchorY = 0.5;
-        arenaCoinIcon.x = 115;  // 分隔符后面
+        arenaCoinIcon.x = iconSize + 90;  // 分隔符后面
         arenaCoinIcon.y = 0;
-        var arenaCoinSprite = arenaCoinIcon.addComponent(cc.Sprite);
-        arenaCoinSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-        arenaCoinIcon.setContentSize(24, 24);  // 图标大小
+        arenaCoinIcon.setContentSize(iconSize, iconSize);
+        
+        // 绘制绿色圆形背景
+        var arenaCoinGraphics = arenaCoinIcon.addComponent(cc.Graphics);
+        arenaCoinGraphics.fillColor = cc.color(80, 200, 120);  // 绿色
+        arenaCoinGraphics.circle(0, 0, iconSize / 2);
+        arenaCoinGraphics.fill();
+        // 绘制边框
+        arenaCoinGraphics.strokeColor = cc.color(40, 150, 80);
+        arenaCoinGraphics.lineWidth = 1.5;
+        arenaCoinGraphics.circle(0, 0, iconSize / 2 - 1);
+        arenaCoinGraphics.stroke();
         arenaCoinIcon.parent = container;
         
-        // 加载竞技币图标（使用yuanbaoIcon但着蓝色）
-        cc.resources.load('UI/yuanbaoIcon', cc.SpriteFrame, function(err, spriteFrame) {
-            if (!err && spriteFrame && arenaCoinSprite) {
-                arenaCoinSprite.spriteFrame = spriteFrame;
-                // 设置蓝色调
-                arenaCoinIcon.color = cc.color(100, 180, 255);
-            }
-        });
+        // 竞技币图标上的"币"字
+        var arenaCoinTextNode = new cc.Node("text");
+        arenaCoinTextNode.anchorX = 0.5;
+        arenaCoinTextNode.anchorY = 0.5;
+        arenaCoinTextNode.x = 0;
+        arenaCoinTextNode.y = 0;
+        var arenaCoinText = arenaCoinTextNode.addComponent(cc.Label);
+        arenaCoinText.string = "币";
+        arenaCoinText.fontSize = 14;
+        arenaCoinText.lineHeight = 16;
+        arenaCoinText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        arenaCoinTextNode.color = cc.color(255, 255, 255);  // 白色文字
+        arenaCoinTextNode.parent = arenaCoinIcon;
         
         // 竞技币数值
         var arenaCoinValueLabel = new cc.Node("arena_coin_value");
         arenaCoinValueLabel.anchorX = 0;
         arenaCoinValueLabel.anchorY = 0.5;
-        arenaCoinValueLabel.x = 143;  // 图标后面
+        arenaCoinValueLabel.x = iconSize + 94;  // 图标后面
         arenaCoinValueLabel.y = 0;
         var arenaCoinValue = arenaCoinValueLabel.addComponent(cc.Label);
         arenaCoinValue.string = "0";
         arenaCoinValue.fontSize = valueFontSize;
-        arenaCoinValue.lineHeight = 26;
+        arenaCoinValue.lineHeight = 28;
         arenaCoinValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
         arenaCoinValueLabel.color = cc.color(255, 255, 255);
         var outline4 = arenaCoinValueLabel.addComponent(cc.LabelOutline);
