@@ -101,6 +101,9 @@ cc.Class({
     _initUIAfterAuth: function() {
         
         try {
+            // ==================== 初始化用户设置（从本地存储加载）====================
+            this._initUserSettings();
+            
             var myglobal = window.myglobal;
             var playerData = myglobal ? myglobal.playerData : null;
             
@@ -455,6 +458,33 @@ cc.Class({
                 } catch (e) {}
             }
         });
+    },
+    
+    // ==================== 初始化用户设置（从本地存储加载）====================
+    _initUserSettings: function() {
+        // 默认设置
+        var defaultSettings = {
+            bgm: 1,
+            sfx: 1,
+            vibration: 1
+        };
+        
+        // 从本地存储读取设置
+        if (typeof StorageUtil !== 'undefined') {
+            var savedSettings = StorageUtil.getItem(StorageUtil.KEYS.USER_SETTINGS, null, true);
+            if (savedSettings && typeof savedSettings === 'object') {
+                defaultSettings.bgm = savedSettings.bgm !== undefined ? savedSettings.bgm : 1;
+                defaultSettings.sfx = savedSettings.sfx !== undefined ? savedSettings.sfx : 1;
+                defaultSettings.vibration = savedSettings.vibration !== undefined ? savedSettings.vibration : 1;
+            }
+        }
+        
+        // 同步到全局变量
+        window.isopen_sound = defaultSettings.bgm;
+        window.isopen_sfx = defaultSettings.sfx;
+        window.isopen_vibration = defaultSettings.vibration;
+        
+        console.log("[Settings] 初始化设置完成:", JSON.stringify(defaultSettings));
     },
 
     _playHallBackgroundMusic: function() {
@@ -6878,6 +6908,52 @@ cc.Class({
             return;
         }
         
+        // ==================== 从本地存储加载设置 ====================
+        var loadSettings = function() {
+            var settings = {
+                bgm: 1,
+                sfx: 1,
+                vibration: 1
+            };
+            
+            if (typeof StorageUtil !== 'undefined') {
+                var savedSettings = StorageUtil.getItem(StorageUtil.KEYS.USER_SETTINGS, null, true);
+                if (savedSettings && typeof savedSettings === 'object') {
+                    settings.bgm = savedSettings.bgm !== undefined ? savedSettings.bgm : 1;
+                    settings.sfx = savedSettings.sfx !== undefined ? savedSettings.sfx : 1;
+                    settings.vibration = savedSettings.vibration !== undefined ? savedSettings.vibration : 1;
+                }
+            }
+            
+            // 同步到全局变量
+            window.isopen_sound = settings.bgm;
+            window.isopen_vibration = settings.vibration;
+            window.isopen_sfx = settings.sfx;
+            
+            return settings;
+        };
+        
+        // ==================== 保存设置到本地存储 ====================
+        var saveSettings = function(key, value) {
+            var settings = {
+                bgm: window.isopen_sound !== undefined ? window.isopen_sound : 1,
+                sfx: window.isopen_sfx !== undefined ? window.isopen_sfx : 1,
+                vibration: window.isopen_vibration !== undefined ? window.isopen_vibration : 1,
+                savedAt: Date.now()
+            };
+            
+            // 更新指定键值
+            settings[key] = value;
+            
+            if (typeof StorageUtil !== 'undefined') {
+                StorageUtil.setItem(StorageUtil.KEYS.USER_SETTINGS, settings);
+                console.log("[Settings] 已保存设置:", key, "=", value);
+            }
+        };
+        
+        // 加载当前设置
+        var currentSettings = loadSettings();
+        
         // 创建弹窗容器
         var dialog = new cc.Node("SettingsDialog");
         dialog.setPosition(0, 0);
@@ -6886,14 +6962,14 @@ cc.Class({
         dialog.zIndex = 1000;
         dialog.parent = this.node;
         
-        // 遮罩层
+        // 遮罩层 - 深色半透明
         var mask = new cc.Node("Mask");
         mask.setPosition(0, 0);
         mask.setContentSize(cc.size(1280, 720));
         mask.anchorX = 0.5;
         mask.anchorY = 0.5;
         var maskGraphics = mask.addComponent(cc.Graphics);
-        maskGraphics.fillColor = cc.color(0, 0, 0, 180);
+        maskGraphics.fillColor = cc.color(0, 0, 0, 160);
         maskGraphics.rect(-640, -360, 1280, 720);
         maskGraphics.fill();
         mask.parent = dialog;
@@ -6903,185 +6979,244 @@ cc.Class({
             dialog.destroy();
         });
         
-        // 弹窗背景
-        var bgWidth = 450;
-        var bgHeight = 400;
+        // ==================== 弹窗背景 - 美化样式 ====================
+        var bgWidth = 420;
+        var bgHeight = 380;
         var bgNode = new cc.Node("BgNode");
         bgNode.setPosition(0, 0);
         bgNode.setContentSize(cc.size(bgWidth, bgHeight));
         bgNode.anchorX = 0.5;
         bgNode.anchorY = 0.5;
         var bgGraphics = bgNode.addComponent(cc.Graphics);
-        bgGraphics.fillColor = cc.color(45, 40, 60, 245);  // 深紫色背景
-        bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 15);
+        
+        // 绘制阴影效果
+        bgGraphics.fillColor = cc.color(0, 0, 0, 60);
+        bgGraphics.roundRect(-bgWidth/2 + 5, -bgHeight/2 - 5, bgWidth, bgHeight, 16);
         bgGraphics.fill();
-        bgGraphics.strokeColor = cc.color(255, 200, 100, 200);  // 金色边框
-        bgGraphics.lineWidth = 3;
+        
+        // 主背景 - 深色渐变风格
+        bgGraphics.fillColor = cc.color(35, 35, 50, 250);
+        bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 16);
+        bgGraphics.fill();
+        
+        // 金色边框
+        bgGraphics.strokeColor = cc.color(218, 165, 32, 255);
+        bgGraphics.lineWidth = 2;
         bgGraphics.stroke();
         bgNode.parent = dialog;
         
-        // 标题
+        // ==================== 标题栏背景 ====================
+        var titleBarHeight = 50;
+        var titleBar = new cc.Node("TitleBar");
+        titleBar.setPosition(0, bgHeight/2 - titleBarHeight/2);
+        titleBar.setContentSize(cc.size(bgWidth - 4, titleBarHeight));
+        titleBar.anchorX = 0.5;
+        titleBar.anchorY = 0.5;
+        var titleBarGraphics = titleBar.addComponent(cc.Graphics);
+        titleBarGraphics.fillColor = cc.color(60, 50, 80, 255);
+        titleBarGraphics.roundRect(-(bgWidth - 4)/2, -titleBarHeight/2, bgWidth - 4, titleBarHeight, 14);
+        titleBarGraphics.fill();
+        titleBar.parent = dialog;
+        
+        // 标题文字 - 垂直居中
         var titleNode = new cc.Node("Title");
-        titleNode.setPosition(0, bgHeight/2 - 40);
+        titleNode.setPosition(0, bgHeight/2 - titleBarHeight/2);
         var titleLabel = titleNode.addComponent(cc.Label);
-        titleLabel.string = "⚙️ 设置";
-        titleLabel.fontSize = 32;
-        titleLabel.lineHeight = 40;
+        titleLabel.string = "设  置";
+        titleLabel.fontSize = 24;
+        titleLabel.lineHeight = titleBarHeight;
         titleLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-        titleNode.color = cc.color(255, 215, 0);  // 金色
+        titleLabel.verticalAlign = cc.Label.VerticalAlign.CENTER;
+        titleNode.color = cc.color(255, 215, 0);
         titleNode.parent = dialog;
         
-        // 分隔线
-        var lineY = bgHeight/2 - 70;
-        var line = new cc.Node("Line");
-        line.setPosition(0, lineY);
-        var lineGraphics = line.addComponent(cc.Graphics);
-        lineGraphics.strokeColor = cc.color(255, 200, 100, 100);
-        lineGraphics.lineWidth = 1;
-        lineGraphics.moveTo(-bgWidth/2 + 30, 0);
-        lineGraphics.lineTo(bgWidth/2 - 30, 0);
-        lineGraphics.stroke();
-        line.parent = dialog;
+        // ==================== 设置项容器 ====================
+        var settingsStartY = bgHeight/2 - titleBarHeight - 30;
+        var itemHeight = 52;
+        var itemGap = 8;
         
-        // 设置项起始位置
-        var startY = lineY - 35;
-        var itemHeight = 55;
-        
-        // 获取当前设置状态
-        var bgmEnabled = window.isopen_sound !== undefined ? window.isopen_sound : 1;
-        var sfxEnabled = window.isopen_sound !== undefined ? window.isopen_sound : 1;
-        var vibrationEnabled = window.isopen_vibration !== undefined ? window.isopen_vibration : 1;
-        
-        // 创建开关项的函数
+        // ==================== 创建开关项的函数 - 优化版 ====================
         var createToggleItem = function(title, icon, y, isEnabled, key, callback) {
-            // 背景条
-            var itemBg = new cc.Node("ItemBg_" + key);
-            itemBg.setPosition(0, y);
-            itemBg.setContentSize(cc.size(bgWidth - 40, 48));
+            // 选项背景容器
+            var itemContainer = new cc.Node("ItemContainer_" + key);
+            itemContainer.setPosition(0, y);
+            itemContainer.setContentSize(cc.size(bgWidth - 30, itemHeight));
+            itemContainer.anchorX = 0.5;
+            itemContainer.anchorY = 0.5;
+            itemContainer.parent = dialog;
+            
+            // 背景条 - 圆角矩形
+            var itemBg = new cc.Node("ItemBg");
+            itemBg.setPosition(0, 0);
+            itemBg.setContentSize(cc.size(bgWidth - 30, itemHeight - 4));
             itemBg.anchorX = 0.5;
             itemBg.anchorY = 0.5;
             var itemGraphics = itemBg.addComponent(cc.Graphics);
-            itemGraphics.fillColor = cc.color(60, 55, 75, 200);
-            itemGraphics.roundRect(-(bgWidth - 40)/2, -24, bgWidth - 40, 48, 8);
+            itemGraphics.fillColor = cc.color(55, 50, 70, 255);
+            itemGraphics.roundRect(-(bgWidth - 30)/2, -(itemHeight - 4)/2, bgWidth - 30, itemHeight - 4, 10);
             itemGraphics.fill();
-            itemBg.parent = dialog;
+            itemBg.parent = itemContainer;
             
-            // 标签
-            var label = new cc.Node("Label");
-            label.setPosition(-bgWidth/2 + 50, 0);
-            var labelComp = label.addComponent(cc.Label);
-            labelComp.string = icon + " " + title;
-            labelComp.fontSize = 20;
-            labelComp.lineHeight = 28;
-            label.color = cc.color(220, 220, 220);
-            label.parent = itemBg;
+            // 图标节点
+            var iconNode = new cc.Node("Icon");
+            iconNode.setPosition(-(bgWidth - 30)/2 + 28, 0);
+            var iconLabel = iconNode.addComponent(cc.Label);
+            iconLabel.string = icon;
+            iconLabel.fontSize = 22;
+            iconLabel.lineHeight = itemHeight;
+            iconLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+            iconLabel.verticalAlign = cc.Label.VerticalAlign.CENTER;
+            iconNode.parent = itemContainer;
             
-            // 开关容器
+            // 标签文字 - 确保垂直居中
+            var labelNode = new cc.Node("Label");
+            labelNode.setPosition(-(bgWidth - 30)/2 + 65, 0);
+            var labelComp = labelNode.addComponent(cc.Label);
+            labelComp.string = title;
+            labelComp.fontSize = 18;
+            labelComp.lineHeight = itemHeight;
+            labelComp.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+            labelComp.verticalAlign = cc.Label.VerticalAlign.CENTER;
+            labelNode.color = cc.color(240, 240, 240);
+            labelNode.parent = itemContainer;
+            
+            // ==================== 开关组件 - 美化版 ====================
+            var toggleWidth = 56;
+            var toggleHeight = 28;
             var toggleContainer = new cc.Node("ToggleContainer");
-            toggleContainer.setPosition(bgWidth/2 - 70, 0);
-            toggleContainer.setContentSize(cc.size(60, 30));
+            toggleContainer.setPosition((bgWidth - 30)/2 - 38, 0);
+            toggleContainer.setContentSize(cc.size(toggleWidth, toggleHeight));
             toggleContainer.anchorX = 0.5;
             toggleContainer.anchorY = 0.5;
-            toggleContainer.parent = itemBg;
+            toggleContainer.parent = itemContainer;
             
             // 开关状态
             var toggleState = isEnabled ? 1 : 0;
             
-            // 绘制开关
+            // 绘制开关 - 带阴影效果
             var drawToggle = function(state, node) {
                 var g = node.getComponent(cc.Graphics) || node.addComponent(cc.Graphics);
                 g.clear();
                 
-                // 背景轨道
+                var halfWidth = toggleWidth / 2;
+                var halfHeight = toggleHeight / 2;
+                var knobRadius = 11;
+                
+                // 背景轨道 - 根据状态变色
                 if (state === 1) {
-                    g.fillColor = cc.color(100, 200, 100, 255);  // 绿色 - 开启
+                    // 开启状态 - 翠绿色
+                    g.fillColor = cc.color(76, 175, 80, 255);
                 } else {
-                    g.fillColor = cc.color(100, 100, 100, 255);  // 灰色 - 关闭
+                    // 关闭状态 - 深灰色
+                    g.fillColor = cc.color(80, 80, 80, 255);
                 }
-                g.roundRect(-28, -12, 56, 24, 12);
+                g.roundRect(-halfWidth, -halfHeight, toggleWidth, toggleHeight, halfHeight);
                 g.fill();
                 
-                // 滑块
-                var knobX = state === 1 ? 16 : -16;
+                // 滑块 - 白色带阴影效果
+                var knobX = state === 1 ? halfWidth - knobRadius - 3 : -halfWidth + knobRadius + 3;
+                
+                // 滑块阴影
+                g.fillColor = cc.color(0, 0, 0, 50);
+                g.circle(knobX, -2, knobRadius);
+                g.fill();
+                
+                // 滑块本体
                 g.fillColor = cc.color(255, 255, 255, 255);
-                g.circle(knobX, 0, 10);
+                g.circle(knobX, 0, knobRadius);
                 g.fill();
             };
             
             drawToggle(toggleState, toggleContainer);
             
-            // 存储状态
+            // 存储状态和回调
             toggleContainer._toggleState = toggleState;
             toggleContainer._key = key;
             toggleContainer._callback = callback;
             
-            // 点击切换
-            toggleContainer.on(cc.Node.EventType.TOUCH_END, function(event) {
+            // 整个选项区域点击切换
+            itemContainer.on(cc.Node.EventType.TOUCH_END, function(event) {
                 event.stopPropagation();
                 var newState = toggleContainer._toggleState === 1 ? 0 : 1;
                 toggleContainer._toggleState = newState;
                 drawToggle(newState, toggleContainer);
                 
-                // 更新全局状态
+                // 更新全局状态并保存到本地
                 if (toggleContainer._key === 'bgm') {
                     window.isopen_sound = newState;
+                    saveSettings('bgm', newState);
                     if (newState === 1) {
                         self._playHallBackgroundMusic();
                     } else {
                         cc.audioEngine.stopMusic();
                     }
                 } else if (toggleContainer._key === 'sfx') {
-                    window.isopen_sound = newState;
+                    window.isopen_sfx = newState;
+                    saveSettings('sfx', newState);
+                    // 播放点击音效提示
+                    if (newState === 1 && self._playClickSound) {
+                        self._playClickSound();
+                    }
                 } else if (toggleContainer._key === 'vibration') {
                     window.isopen_vibration = newState;
+                    saveSettings('vibration', newState);
+                    // 触发震动提示
+                    if (newState === 1 && cc.vibrateShort) {
+                        cc.vibrateShort();
+                    }
                 }
                 
                 if (callback) callback(newState);
             });
             
-            return itemBg;
+            return itemContainer;
         };
         
-        // 添加设置项
-        createToggleItem("背景音乐", "🎵", startY, bgmEnabled, 'bgm', function(state) {
-        });
+        // ==================== 添加设置项 ====================
+        createToggleItem("背景音乐", "🎵", settingsStartY - itemHeight/2, currentSettings.bgm, 'bgm');
+        createToggleItem("游戏音效", "🔊", settingsStartY - itemHeight - itemGap - itemHeight/2, currentSettings.sfx, 'sfx');
+        createToggleItem("震动反馈", "📳", settingsStartY - itemHeight * 2 - itemGap * 2 - itemHeight/2, currentSettings.vibration, 'vibration');
         
-        createToggleItem("游戏音效", "🔊", startY - itemHeight, sfxEnabled, 'sfx', function(state) {
-        });
+        // ==================== 分隔线 ====================
+        var lineY = settingsStartY - itemHeight * 3 - itemGap * 2 - 15;
+        var line = new cc.Node("Line");
+        line.setPosition(0, lineY);
+        var lineGraphics = line.addComponent(cc.Graphics);
+        lineGraphics.strokeColor = cc.color(100, 90, 120, 150);
+        lineGraphics.lineWidth = 1;
+        lineGraphics.moveTo(-bgWidth/2 + 20, 0);
+        lineGraphics.lineTo(bgWidth/2 - 20, 0);
+        lineGraphics.stroke();
+        line.parent = dialog;
         
-        createToggleItem("震动反馈", "📳", startY - itemHeight * 2, vibrationEnabled, 'vibration', function(state) {
-        });
-        
-        // 分隔线2
-        var line2Y = startY - itemHeight * 3 - 10;
-        var line2 = new cc.Node("Line2");
-        line2.setPosition(0, line2Y);
-        var line2Graphics = line2.addComponent(cc.Graphics);
-        line2Graphics.strokeColor = cc.color(255, 200, 100, 100);
-        line2Graphics.lineWidth = 1;
-        line2Graphics.moveTo(-bgWidth/2 + 30, 0);
-        line2Graphics.lineTo(bgWidth/2 - 30, 0);
-        line2Graphics.stroke();
-        line2.parent = dialog;
-        
-        // 退出登录按钮
-        var logoutBtnY = line2Y - 35;
+        // ==================== 退出登录按钮 - 美化版 ====================
+        var logoutBtnY = lineY - 35;
         var logoutBtn = new cc.Node("LogoutBtn");
         logoutBtn.setPosition(0, logoutBtnY);
-        logoutBtn.setContentSize(cc.size(160, 45));
+        logoutBtn.setContentSize(cc.size(140, 42));
         logoutBtn.anchorX = 0.5;
         logoutBtn.anchorY = 0.5;
         var logoutGraphics = logoutBtn.addComponent(cc.Graphics);
-        logoutGraphics.fillColor = cc.color(200, 60, 60, 255);  // 红色
-        logoutGraphics.roundRect(-80, -22.5, 160, 45, 8);
+        
+        // 按钮阴影
+        logoutGraphics.fillColor = cc.color(0, 0, 0, 80);
+        logoutGraphics.roundRect(-72, -23, 144, 46, 8);
+        logoutGraphics.fill();
+        
+        // 按钮本体 - 红色渐变效果
+        logoutGraphics.fillColor = cc.color(220, 53, 69, 255);
+        logoutGraphics.roundRect(-70, -21, 140, 42, 8);
         logoutGraphics.fill();
         logoutBtn.parent = dialog;
         
+        // 退出登录文字 - 垂直居中
         var logoutLabel = new cc.Node("Label");
         var logoutLabelComp = logoutLabel.addComponent(cc.Label);
         logoutLabelComp.string = "退出登录";
-        logoutLabelComp.fontSize = 20;
+        logoutLabelComp.fontSize = 18;
+        logoutLabelComp.lineHeight = 42;
         logoutLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        logoutLabelComp.verticalAlign = cc.Label.VerticalAlign.CENTER;
         logoutLabel.color = cc.color(255, 255, 255);
         logoutLabel.parent = logoutBtn;
         
@@ -7091,23 +7226,30 @@ cc.Class({
             self._showLogoutConfirm(dialog);
         });
         
-        // 关闭按钮（右上角X）
+        // ==================== 关闭按钮（右上角X）- 美化版 ====================
         var closeBtn = new cc.Node("CloseBtn");
-        closeBtn.setPosition(bgWidth/2 - 25, bgHeight/2 - 25);
-        closeBtn.setContentSize(cc.size(36, 36));
+        closeBtn.setPosition(bgWidth/2 - 28, bgHeight/2 - 28);
+        closeBtn.setContentSize(cc.size(32, 32));
         closeBtn.anchorX = 0.5;
         closeBtn.anchorY = 0.5;
         var closeGraphics = closeBtn.addComponent(cc.Graphics);
-        closeGraphics.fillColor = cc.color(80, 80, 80, 200);
-        closeGraphics.circle(0, 0, 18);
+        closeGraphics.fillColor = cc.color(100, 90, 110, 230);
+        closeGraphics.circle(0, 0, 16);
         closeGraphics.fill();
+        closeGraphics.strokeColor = cc.color(180, 170, 190, 150);
+        closeGraphics.lineWidth = 1;
+        closeGraphics.circle(0, 0, 16);
+        closeGraphics.stroke();
         closeBtn.parent = dialog;
         
+        // 关闭按钮X标记 - 垂直居中
         var closeX = new cc.Node("X");
         var closeXLabel = closeX.addComponent(cc.Label);
         closeXLabel.string = "✕";
-        closeXLabel.fontSize = 20;
+        closeXLabel.fontSize = 18;
+        closeXLabel.lineHeight = 32;
         closeXLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        closeXLabel.verticalAlign = cc.Label.VerticalAlign.CENTER;
         closeX.color = cc.color(255, 255, 255);
         closeX.parent = closeBtn;
         
@@ -7138,46 +7280,72 @@ cc.Class({
         maskGraphics.fill();
         mask.parent = confirmDialog;
         
-        // 背景
+        // 背景 - 美化样式
         var bgWidth = 320;
-        var bgHeight = 180;
+        var bgHeight = 170;
         var bg = new cc.Node("Bg");
         bg.setContentSize(cc.size(bgWidth, bgHeight));
+        bg.anchorX = 0.5;
+        bg.anchorY = 0.5;
         var bgGraphics = bg.addComponent(cc.Graphics);
-        bgGraphics.fillColor = cc.color(50, 45, 65, 255);
+        
+        // 阴影
+        bgGraphics.fillColor = cc.color(0, 0, 0, 50);
+        bgGraphics.roundRect(-bgWidth/2 + 4, -bgHeight/2 - 4, bgWidth, bgHeight, 12);
+        bgGraphics.fill();
+        
+        // 主背景
+        bgGraphics.fillColor = cc.color(40, 38, 55, 255);
         bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 12);
         bgGraphics.fill();
+        
+        // 边框
+        bgGraphics.strokeColor = cc.color(218, 165, 32, 200);
+        bgGraphics.lineWidth = 2;
+        bgGraphics.stroke();
         bg.parent = confirmDialog;
         
-        // 提示文字
+        // 提示文字 - 垂直居中
         var tipLabel = new cc.Node("Tip");
-        tipLabel.setPosition(0, 30);
+        tipLabel.setPosition(0, 25);
         var tipLabelComp = tipLabel.addComponent(cc.Label);
         tipLabelComp.string = "确定要退出登录吗？";
-        tipLabelComp.fontSize = 22;
+        tipLabelComp.fontSize = 20;
+        tipLabelComp.lineHeight = 50;
         tipLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        tipLabelComp.verticalAlign = cc.Label.VerticalAlign.CENTER;
         tipLabel.color = cc.color(255, 255, 255);
         tipLabel.parent = confirmDialog;
         
         // 按钮区域
         var btnY = -bgHeight/2 + 45;
+        var btnWidth = 100;
+        var btnHeight = 38;
         
-        // 取消按钮
+        // 取消按钮 - 美化版
         var cancelBtn = new cc.Node("CancelBtn");
-        cancelBtn.setPosition(-75, btnY);
-        cancelBtn.setContentSize(cc.size(110, 40));
+        cancelBtn.setPosition(-60, btnY);
+        cancelBtn.setContentSize(cc.size(btnWidth, btnHeight));
+        cancelBtn.anchorX = 0.5;
+        cancelBtn.anchorY = 0.5;
         var cancelGraphics = cancelBtn.addComponent(cc.Graphics);
-        cancelGraphics.fillColor = cc.color(80, 80, 80, 255);
-        cancelGraphics.roundRect(-55, -20, 110, 40, 6);
+        cancelGraphics.fillColor = cc.color(70, 65, 85, 255);
+        cancelGraphics.roundRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 6);
         cancelGraphics.fill();
+        cancelGraphics.strokeColor = cc.color(100, 95, 115, 200);
+        cancelGraphics.lineWidth = 1;
+        cancelGraphics.stroke();
         cancelBtn.parent = confirmDialog;
         
+        // 取消按钮文字 - 垂直居中
         var cancelLabel = new cc.Node("Label");
         var cancelLabelComp = cancelLabel.addComponent(cc.Label);
         cancelLabelComp.string = "取消";
-        cancelLabelComp.fontSize = 18;
+        cancelLabelComp.fontSize = 16;
+        cancelLabelComp.lineHeight = btnHeight;
         cancelLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-        cancelLabel.color = cc.color(255, 255, 255);
+        cancelLabelComp.verticalAlign = cc.Label.VerticalAlign.CENTER;
+        cancelLabel.color = cc.color(240, 240, 240);
         cancelLabel.parent = cancelBtn;
         
         cancelBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
@@ -7185,21 +7353,26 @@ cc.Class({
             confirmDialog.destroy();
         });
         
-        // 确认按钮
+        // 确认按钮 - 美化版
         var confirmBtn = new cc.Node("ConfirmBtn");
-        confirmBtn.setPosition(75, btnY);
-        confirmBtn.setContentSize(cc.size(110, 40));
+        confirmBtn.setPosition(60, btnY);
+        confirmBtn.setContentSize(cc.size(btnWidth, btnHeight));
+        confirmBtn.anchorX = 0.5;
+        confirmBtn.anchorY = 0.5;
         var confirmGraphics = confirmBtn.addComponent(cc.Graphics);
-        confirmGraphics.fillColor = cc.color(200, 60, 60, 255);
-        confirmGraphics.roundRect(-55, -20, 110, 40, 6);
+        confirmGraphics.fillColor = cc.color(220, 53, 69, 255);
+        confirmGraphics.roundRect(-btnWidth/2, -btnHeight/2, btnWidth, btnHeight, 6);
         confirmGraphics.fill();
         confirmBtn.parent = confirmDialog;
         
+        // 确认按钮文字 - 垂直居中
         var confirmLabel = new cc.Node("Label");
         var confirmLabelComp = confirmLabel.addComponent(cc.Label);
         confirmLabelComp.string = "退出";
-        confirmLabelComp.fontSize = 18;
+        confirmLabelComp.fontSize = 16;
+        confirmLabelComp.lineHeight = btnHeight;
         confirmLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        confirmLabelComp.verticalAlign = cc.Label.VerticalAlign.CENTER;
         confirmLabel.color = cc.color(255, 255, 255);
         confirmLabel.parent = confirmBtn;
         
@@ -7212,10 +7385,14 @@ cc.Class({
             }
             
             // 清除本地存储
-            try {
-                localStorage.removeItem('token');
-                localStorage.removeItem('playerData');
-            } catch (e) {}
+            if (typeof StorageUtil !== 'undefined') {
+                StorageUtil.clearPlayerSession();
+            } else {
+                try {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('playerData');
+                } catch (e) {}
+            }
             
             // 关闭弹窗
             confirmDialog.destroy();
