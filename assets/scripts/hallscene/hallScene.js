@@ -5580,7 +5580,7 @@ cc.Class({
         var containerHeight = 40;   // 容器高度40px
         var iconSize = 22;          // 图标大小22px
         var valueFontSize = 20;     // 数字字体大小
-        var iconTextGap = 6;        // 图标与数字间距
+        var iconTextGap = 5;        // 图标与数字间距（调整为5px）
         var currencyGap = 25;       // 两种货币之间的间距
         
         // ========== 创建容器节点 ==========
@@ -5595,10 +5595,10 @@ cc.Class({
         // ========== 欢乐豆显示 ==========
         // 欢乐豆图标 - 22px圆形带"豆"字
         var happyBeanIcon = new cc.Node("happy_bean_icon");
-        happyBeanIcon.anchorX = 0;
-        happyBeanIcon.anchorY = 0.5;  // 垂直居中
-        happyBeanIcon.x = 0;
-        happyBeanIcon.y = 0;          // 容器中心
+        happyBeanIcon.anchorX = 0.5;   // 修改：锚点设在中心，方便文字居中
+        happyBeanIcon.anchorY = 0.5;   // 垂直居中
+        happyBeanIcon.x = iconSize / 2; // 修改：调整位置使图标正确显示
+        happyBeanIcon.y = 0;           // 容器中心
         happyBeanIcon.setContentSize(iconSize, iconSize);
         
         // 绘制图标背景 - 橙黄色
@@ -5608,15 +5608,18 @@ cc.Class({
         happyBeanGraphics.fill();
         happyBeanIcon.parent = container;
         
-        // 图标上的"豆"字
+        // 图标上的"豆"字 - 居中显示在圆形背景中
         var happyBeanTextNode = new cc.Node("text");
         happyBeanTextNode.anchorX = 0.5;
         happyBeanTextNode.anchorY = 0.5;
+        happyBeanTextNode.x = 0;      // 修改：明确设置位置在图标中心
+        happyBeanTextNode.y = 0;      // 修改：明确设置位置在图标中心
         var happyBeanText = happyBeanTextNode.addComponent(cc.Label);
         happyBeanText.string = "豆";
         happyBeanText.fontSize = 13;
-        happyBeanText.lineHeight = 16;
+        happyBeanText.lineHeight = iconSize;  // 修改：行高等于图标大小，确保垂直居中
         happyBeanText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        happyBeanText.verticalAlign = cc.Label.VerticalAlign.CENTER;  // 修改：添加垂直居中对齐
         happyBeanTextNode.color = cc.color(139, 69, 19);  // 深棕色
         happyBeanTextNode.parent = happyBeanIcon;
         
@@ -5624,7 +5627,7 @@ cc.Class({
         var happyBeanValueLabel = new cc.Node("happy_bean_value");
         happyBeanValueLabel.anchorX = 0;
         happyBeanValueLabel.anchorY = 0.5;  // 垂直居中
-        happyBeanValueLabel.x = iconSize + iconTextGap;
+        happyBeanValueLabel.x = iconSize + iconTextGap;  // 图标宽度 + 间距（图标锚点已改为中心，所以这里不需要调整）
         happyBeanValueLabel.y = 0;          // 容器中心
         var happyBeanValue = happyBeanValueLabel.addComponent(cc.Label);
         happyBeanValue.string = "0";
@@ -5643,10 +5646,10 @@ cc.Class({
         
         // 竞技币图标 - 22px圆形带"币"字
         var arenaCoinIcon = new cc.Node("arena_coin_icon");
-        arenaCoinIcon.anchorX = 0;
-        arenaCoinIcon.anchorY = 0.5;  // 垂直居中
-        arenaCoinIcon.x = arenaStartX;
-        arenaCoinIcon.y = 0;          // 容器中心
+        arenaCoinIcon.anchorX = 0.5;   // 修改：锚点设在中心，方便文字居中
+        arenaCoinIcon.anchorY = 0.5;   // 垂直居中
+        arenaCoinIcon.x = arenaStartX + iconSize / 2; // 修改：调整位置使图标正确显示
+        arenaCoinIcon.y = 0;           // 容器中心
         arenaCoinIcon.setContentSize(iconSize, iconSize);
         
         // 绘制图标背景 - 蓝色
@@ -5656,15 +5659,18 @@ cc.Class({
         arenaCoinGraphics.fill();
         arenaCoinIcon.parent = container;
         
-        // 图标上的"币"字
+        // 图标上的"币"字 - 居中显示在圆形背景中
         var arenaCoinTextNode = new cc.Node("text");
         arenaCoinTextNode.anchorX = 0.5;
         arenaCoinTextNode.anchorY = 0.5;
+        arenaCoinTextNode.x = 0;      // 修改：明确设置位置在图标中心
+        arenaCoinTextNode.y = 0;      // 修改：明确设置位置在图标中心
         var arenaCoinText = arenaCoinTextNode.addComponent(cc.Label);
         arenaCoinText.string = "币";
         arenaCoinText.fontSize = 13;
-        arenaCoinText.lineHeight = 16;
+        arenaCoinText.lineHeight = iconSize;  // 修改：行高等于图标大小，确保垂直居中
         arenaCoinText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        arenaCoinText.verticalAlign = cc.Label.VerticalAlign.CENTER;  // 修改：添加垂直居中对齐
         arenaCoinTextNode.color = cc.color(255, 255, 255);  // 白色
         arenaCoinTextNode.parent = arenaCoinIcon;
         
@@ -5672,7 +5678,7 @@ cc.Class({
         var arenaCoinValueLabel = new cc.Node("arena_coin_value");
         arenaCoinValueLabel.anchorX = 0;
         arenaCoinValueLabel.anchorY = 0.5;  // 垂直居中
-        arenaCoinValueLabel.x = arenaStartX + iconSize + iconTextGap;
+        arenaCoinValueLabel.x = arenaStartX + iconSize + iconTextGap;  // 图标宽度 + 间距
         arenaCoinValueLabel.y = 0;          // 容器中心
         var arenaCoinValue = arenaCoinValueLabel.addComponent(cc.Label);
         arenaCoinValue.string = "0";
