@@ -155,6 +155,9 @@ cc.Class({
             // 🚀【性能优化】预加载游戏场景
             this._preloadGameScene();
             
+            // 初始化顶部按钮（设置、帮助等）
+            this._initTopButtons();
+            
         } catch (e) {
             console.error("_initUIAfterAuth 异常:", e);
         }
@@ -6823,6 +6826,538 @@ cc.Class({
                 self._updateCurrencyDisplay();
             });
         }, 1.5);
+    },
+    
+    // ============================================================
+    // 初始化顶部按钮（设置、帮助等）
+    // ============================================================
+    _initTopButtons: function() {
+        var self = this;
+        
+        // 设置按钮 - 场景中节点名为 "shezhi"
+        var settingBtn = this.node.getChildByName("shezhi");
+        if (settingBtn) {
+            settingBtn.off(cc.Node.EventType.TOUCH_END);
+            settingBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+                event.stopPropagation();
+                self._showSettingsDialog();
+            });
+        }
+        
+        // 帮助按钮 - 场景中节点名为 "bangzhu"
+        var helpBtn = this.node.getChildByName("bangzhu");
+        if (helpBtn) {
+            helpBtn.off(cc.Node.EventType.TOUCH_END);
+            helpBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+                event.stopPropagation();
+                self._showHelpDialog();
+            });
+        }
+        
+        // 消息按钮 - 场景中节点名为 "xiao'xi"
+        var msgBtn = this.node.getChildByName("xiao'xi");
+        if (msgBtn) {
+            msgBtn.off(cc.Node.EventType.TOUCH_END);
+            msgBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+                event.stopPropagation();
+                self._showMessageCenter("暂无新消息");
+            });
+        }
+    },
+    
+    // ============================================================
+    // 显示设置弹窗
+    // ============================================================
+    _showSettingsDialog: function() {
+        var self = this;
+        
+        // 检查是否已有设置弹窗
+        var existingDialog = this.node.getChildByName("SettingsDialog");
+        if (existingDialog) {
+            existingDialog.destroy();
+            return;
+        }
+        
+        // 创建弹窗容器
+        var dialog = new cc.Node("SettingsDialog");
+        dialog.setPosition(0, 0);
+        dialog.anchorX = 0.5;
+        dialog.anchorY = 0.5;
+        dialog.zIndex = 1000;
+        dialog.parent = this.node;
+        
+        // 遮罩层
+        var mask = new cc.Node("Mask");
+        mask.setPosition(0, 0);
+        mask.setContentSize(cc.size(1280, 720));
+        mask.anchorX = 0.5;
+        mask.anchorY = 0.5;
+        var maskGraphics = mask.addComponent(cc.Graphics);
+        maskGraphics.fillColor = cc.color(0, 0, 0, 180);
+        maskGraphics.rect(-640, -360, 1280, 720);
+        maskGraphics.fill();
+        mask.parent = dialog;
+        
+        // 点击遮罩关闭
+        mask.on(cc.Node.EventType.TOUCH_END, function() {
+            dialog.destroy();
+        });
+        
+        // 弹窗背景
+        var bgWidth = 450;
+        var bgHeight = 400;
+        var bgNode = new cc.Node("BgNode");
+        bgNode.setPosition(0, 0);
+        bgNode.setContentSize(cc.size(bgWidth, bgHeight));
+        bgNode.anchorX = 0.5;
+        bgNode.anchorY = 0.5;
+        var bgGraphics = bgNode.addComponent(cc.Graphics);
+        bgGraphics.fillColor = cc.color(45, 40, 60, 245);  // 深紫色背景
+        bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 15);
+        bgGraphics.fill();
+        bgGraphics.strokeColor = cc.color(255, 200, 100, 200);  // 金色边框
+        bgGraphics.lineWidth = 3;
+        bgGraphics.stroke();
+        bgNode.parent = dialog;
+        
+        // 标题
+        var titleNode = new cc.Node("Title");
+        titleNode.setPosition(0, bgHeight/2 - 40);
+        var titleLabel = titleNode.addComponent(cc.Label);
+        titleLabel.string = "⚙️ 设置";
+        titleLabel.fontSize = 32;
+        titleLabel.lineHeight = 40;
+        titleLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        titleNode.color = cc.color(255, 215, 0);  // 金色
+        titleNode.parent = dialog;
+        
+        // 分隔线
+        var lineY = bgHeight/2 - 70;
+        var line = new cc.Node("Line");
+        line.setPosition(0, lineY);
+        var lineGraphics = line.addComponent(cc.Graphics);
+        lineGraphics.strokeColor = cc.color(255, 200, 100, 100);
+        lineGraphics.lineWidth = 1;
+        lineGraphics.moveTo(-bgWidth/2 + 30, 0);
+        lineGraphics.lineTo(bgWidth/2 - 30, 0);
+        lineGraphics.stroke();
+        line.parent = dialog;
+        
+        // 设置项起始位置
+        var startY = lineY - 35;
+        var itemHeight = 55;
+        
+        // 获取当前设置状态
+        var bgmEnabled = window.isopen_sound !== undefined ? window.isopen_sound : 1;
+        var sfxEnabled = window.isopen_sound !== undefined ? window.isopen_sound : 1;
+        var vibrationEnabled = window.isopen_vibration !== undefined ? window.isopen_vibration : 1;
+        
+        // 创建开关项的函数
+        var createToggleItem = function(title, icon, y, isEnabled, key, callback) {
+            // 背景条
+            var itemBg = new cc.Node("ItemBg_" + key);
+            itemBg.setPosition(0, y);
+            itemBg.setContentSize(cc.size(bgWidth - 40, 48));
+            itemBg.anchorX = 0.5;
+            itemBg.anchorY = 0.5;
+            var itemGraphics = itemBg.addComponent(cc.Graphics);
+            itemGraphics.fillColor = cc.color(60, 55, 75, 200);
+            itemGraphics.roundRect(-(bgWidth - 40)/2, -24, bgWidth - 40, 48, 8);
+            itemGraphics.fill();
+            itemBg.parent = dialog;
+            
+            // 标签
+            var label = new cc.Node("Label");
+            label.setPosition(-bgWidth/2 + 50, 0);
+            var labelComp = label.addComponent(cc.Label);
+            labelComp.string = icon + " " + title;
+            labelComp.fontSize = 20;
+            labelComp.lineHeight = 28;
+            label.color = cc.color(220, 220, 220);
+            label.parent = itemBg;
+            
+            // 开关容器
+            var toggleContainer = new cc.Node("ToggleContainer");
+            toggleContainer.setPosition(bgWidth/2 - 70, 0);
+            toggleContainer.setContentSize(cc.size(60, 30));
+            toggleContainer.anchorX = 0.5;
+            toggleContainer.anchorY = 0.5;
+            toggleContainer.parent = itemBg;
+            
+            // 开关状态
+            var toggleState = isEnabled ? 1 : 0;
+            
+            // 绘制开关
+            var drawToggle = function(state, node) {
+                var g = node.getComponent(cc.Graphics) || node.addComponent(cc.Graphics);
+                g.clear();
+                
+                // 背景轨道
+                if (state === 1) {
+                    g.fillColor = cc.color(100, 200, 100, 255);  // 绿色 - 开启
+                } else {
+                    g.fillColor = cc.color(100, 100, 100, 255);  // 灰色 - 关闭
+                }
+                g.roundRect(-28, -12, 56, 24, 12);
+                g.fill();
+                
+                // 滑块
+                var knobX = state === 1 ? 16 : -16;
+                g.fillColor = cc.color(255, 255, 255, 255);
+                g.circle(knobX, 0, 10);
+                g.fill();
+            };
+            
+            drawToggle(toggleState, toggleContainer);
+            
+            // 存储状态
+            toggleContainer._toggleState = toggleState;
+            toggleContainer._key = key;
+            toggleContainer._callback = callback;
+            
+            // 点击切换
+            toggleContainer.on(cc.Node.EventType.TOUCH_END, function(event) {
+                event.stopPropagation();
+                var newState = toggleContainer._toggleState === 1 ? 0 : 1;
+                toggleContainer._toggleState = newState;
+                drawToggle(newState, toggleContainer);
+                
+                // 更新全局状态
+                if (toggleContainer._key === 'bgm') {
+                    window.isopen_sound = newState;
+                    if (newState === 1) {
+                        self._playHallBackgroundMusic();
+                    } else {
+                        cc.audioEngine.stopMusic();
+                    }
+                } else if (toggleContainer._key === 'sfx') {
+                    window.isopen_sound = newState;
+                } else if (toggleContainer._key === 'vibration') {
+                    window.isopen_vibration = newState;
+                }
+                
+                if (callback) callback(newState);
+            });
+            
+            return itemBg;
+        };
+        
+        // 添加设置项
+        createToggleItem("背景音乐", "🎵", startY, bgmEnabled, 'bgm', function(state) {
+        });
+        
+        createToggleItem("游戏音效", "🔊", startY - itemHeight, sfxEnabled, 'sfx', function(state) {
+        });
+        
+        createToggleItem("震动反馈", "📳", startY - itemHeight * 2, vibrationEnabled, 'vibration', function(state) {
+        });
+        
+        // 分隔线2
+        var line2Y = startY - itemHeight * 3 - 10;
+        var line2 = new cc.Node("Line2");
+        line2.setPosition(0, line2Y);
+        var line2Graphics = line2.addComponent(cc.Graphics);
+        line2Graphics.strokeColor = cc.color(255, 200, 100, 100);
+        line2Graphics.lineWidth = 1;
+        line2Graphics.moveTo(-bgWidth/2 + 30, 0);
+        line2Graphics.lineTo(bgWidth/2 - 30, 0);
+        line2Graphics.stroke();
+        line2.parent = dialog;
+        
+        // 退出登录按钮
+        var logoutBtnY = line2Y - 35;
+        var logoutBtn = new cc.Node("LogoutBtn");
+        logoutBtn.setPosition(0, logoutBtnY);
+        logoutBtn.setContentSize(cc.size(160, 45));
+        logoutBtn.anchorX = 0.5;
+        logoutBtn.anchorY = 0.5;
+        var logoutGraphics = logoutBtn.addComponent(cc.Graphics);
+        logoutGraphics.fillColor = cc.color(200, 60, 60, 255);  // 红色
+        logoutGraphics.roundRect(-80, -22.5, 160, 45, 8);
+        logoutGraphics.fill();
+        logoutBtn.parent = dialog;
+        
+        var logoutLabel = new cc.Node("Label");
+        var logoutLabelComp = logoutLabel.addComponent(cc.Label);
+        logoutLabelComp.string = "退出登录";
+        logoutLabelComp.fontSize = 20;
+        logoutLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        logoutLabel.color = cc.color(255, 255, 255);
+        logoutLabel.parent = logoutBtn;
+        
+        // 退出登录点击事件
+        logoutBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            self._showLogoutConfirm(dialog);
+        });
+        
+        // 关闭按钮（右上角X）
+        var closeBtn = new cc.Node("CloseBtn");
+        closeBtn.setPosition(bgWidth/2 - 25, bgHeight/2 - 25);
+        closeBtn.setContentSize(cc.size(36, 36));
+        closeBtn.anchorX = 0.5;
+        closeBtn.anchorY = 0.5;
+        var closeGraphics = closeBtn.addComponent(cc.Graphics);
+        closeGraphics.fillColor = cc.color(80, 80, 80, 200);
+        closeGraphics.circle(0, 0, 18);
+        closeGraphics.fill();
+        closeBtn.parent = dialog;
+        
+        var closeX = new cc.Node("X");
+        var closeXLabel = closeX.addComponent(cc.Label);
+        closeXLabel.string = "✕";
+        closeXLabel.fontSize = 20;
+        closeXLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        closeX.color = cc.color(255, 255, 255);
+        closeX.parent = closeBtn;
+        
+        closeBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            dialog.destroy();
+        });
+    },
+    
+    // 显示退出登录确认弹窗
+    _showLogoutConfirm: function(parentDialog) {
+        var self = this;
+        
+        // 创建确认弹窗
+        var confirmDialog = new cc.Node("LogoutConfirmDialog");
+        confirmDialog.setPosition(0, 0);
+        confirmDialog.anchorX = 0.5;
+        confirmDialog.anchorY = 0.5;
+        confirmDialog.zIndex = 1100;
+        confirmDialog.parent = this.node;
+        
+        // 遮罩
+        var mask = new cc.Node("Mask");
+        mask.setContentSize(cc.size(1280, 720));
+        var maskGraphics = mask.addComponent(cc.Graphics);
+        maskGraphics.fillColor = cc.color(0, 0, 0, 100);
+        maskGraphics.rect(-640, -360, 1280, 720);
+        maskGraphics.fill();
+        mask.parent = confirmDialog;
+        
+        // 背景
+        var bgWidth = 320;
+        var bgHeight = 180;
+        var bg = new cc.Node("Bg");
+        bg.setContentSize(cc.size(bgWidth, bgHeight));
+        var bgGraphics = bg.addComponent(cc.Graphics);
+        bgGraphics.fillColor = cc.color(50, 45, 65, 255);
+        bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 12);
+        bgGraphics.fill();
+        bg.parent = confirmDialog;
+        
+        // 提示文字
+        var tipLabel = new cc.Node("Tip");
+        tipLabel.setPosition(0, 30);
+        var tipLabelComp = tipLabel.addComponent(cc.Label);
+        tipLabelComp.string = "确定要退出登录吗？";
+        tipLabelComp.fontSize = 22;
+        tipLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        tipLabel.color = cc.color(255, 255, 255);
+        tipLabel.parent = confirmDialog;
+        
+        // 按钮区域
+        var btnY = -bgHeight/2 + 45;
+        
+        // 取消按钮
+        var cancelBtn = new cc.Node("CancelBtn");
+        cancelBtn.setPosition(-75, btnY);
+        cancelBtn.setContentSize(cc.size(110, 40));
+        var cancelGraphics = cancelBtn.addComponent(cc.Graphics);
+        cancelGraphics.fillColor = cc.color(80, 80, 80, 255);
+        cancelGraphics.roundRect(-55, -20, 110, 40, 6);
+        cancelGraphics.fill();
+        cancelBtn.parent = confirmDialog;
+        
+        var cancelLabel = new cc.Node("Label");
+        var cancelLabelComp = cancelLabel.addComponent(cc.Label);
+        cancelLabelComp.string = "取消";
+        cancelLabelComp.fontSize = 18;
+        cancelLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        cancelLabel.color = cc.color(255, 255, 255);
+        cancelLabel.parent = cancelBtn;
+        
+        cancelBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            confirmDialog.destroy();
+        });
+        
+        // 确认按钮
+        var confirmBtn = new cc.Node("ConfirmBtn");
+        confirmBtn.setPosition(75, btnY);
+        confirmBtn.setContentSize(cc.size(110, 40));
+        var confirmGraphics = confirmBtn.addComponent(cc.Graphics);
+        confirmGraphics.fillColor = cc.color(200, 60, 60, 255);
+        confirmGraphics.roundRect(-55, -20, 110, 40, 6);
+        confirmGraphics.fill();
+        confirmBtn.parent = confirmDialog;
+        
+        var confirmLabel = new cc.Node("Label");
+        var confirmLabelComp = confirmLabel.addComponent(cc.Label);
+        confirmLabelComp.string = "退出";
+        confirmLabelComp.fontSize = 18;
+        confirmLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        confirmLabel.color = cc.color(255, 255, 255);
+        confirmLabel.parent = confirmBtn;
+        
+        confirmBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            
+            // 清理数据
+            if (window.myglobal) {
+                window.myglobal.playerData = null;
+            }
+            
+            // 清除本地存储
+            try {
+                localStorage.removeItem('token');
+                localStorage.removeItem('playerData');
+            } catch (e) {}
+            
+            // 关闭弹窗
+            confirmDialog.destroy();
+            if (parentDialog) parentDialog.destroy();
+            
+            // 跳转到登录页
+            cc.director.loadScene("loginScene");
+        });
+    },
+    
+    // 显示帮助弹窗
+    _showHelpDialog: function() {
+        var self = this;
+        
+        // 检查是否已有弹窗
+        var existingDialog = this.node.getChildByName("HelpDialog");
+        if (existingDialog) {
+            existingDialog.destroy();
+            return;
+        }
+        
+        // 创建弹窗容器
+        var dialog = new cc.Node("HelpDialog");
+        dialog.setPosition(0, 0);
+        dialog.anchorX = 0.5;
+        dialog.anchorY = 0.5;
+        dialog.zIndex = 1000;
+        dialog.parent = this.node;
+        
+        // 遮罩层
+        var mask = new cc.Node("Mask");
+        mask.setContentSize(cc.size(1280, 720));
+        var maskGraphics = mask.addComponent(cc.Graphics);
+        maskGraphics.fillColor = cc.color(0, 0, 0, 180);
+        maskGraphics.rect(-640, -360, 1280, 720);
+        maskGraphics.fill();
+        mask.parent = dialog;
+        
+        mask.on(cc.Node.EventType.TOUCH_END, function() {
+            dialog.destroy();
+        });
+        
+        // 弹窗背景
+        var bgWidth = 500;
+        var bgHeight = 450;
+        var bgNode = new cc.Node("BgNode");
+        bgNode.setContentSize(cc.size(bgWidth, bgHeight));
+        var bgGraphics = bgNode.addComponent(cc.Graphics);
+        bgGraphics.fillColor = cc.color(45, 40, 60, 245);
+        bgGraphics.roundRect(-bgWidth/2, -bgHeight/2, bgWidth, bgHeight, 15);
+        bgGraphics.fill();
+        bgGraphics.strokeColor = cc.color(255, 200, 100, 200);
+        bgGraphics.lineWidth = 3;
+        bgGraphics.stroke();
+        bgNode.parent = dialog;
+        
+        // 标题
+        var titleNode = new cc.Node("Title");
+        titleNode.setPosition(0, bgHeight/2 - 40);
+        var titleLabel = titleNode.addComponent(cc.Label);
+        titleLabel.string = "❓ 游戏帮助";
+        titleLabel.fontSize = 32;
+        titleLabel.lineHeight = 40;
+        titleLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        titleNode.color = cc.color(255, 215, 0);
+        titleNode.parent = dialog;
+        
+        // 帮助内容
+        var helpContent = [
+            "🎴 游戏规则",
+            "本游戏为经典斗地主扑克牌游戏",
+            "",
+            "🎮 操作说明",
+            "• 选择房间进入游戏",
+            "• 普通场使用欢乐豆报名",
+            "• 竞技场使用竞技币报名",
+            "",
+            "💰 货币说明",
+            "• 欢乐豆：普通场游戏货币",
+            "• 竞技币：竞技场专用货币",
+            "",
+            "🏆 获胜奖励",
+            "赢得比赛可获得相应货币奖励"
+        ];
+        
+        var contentNode = new cc.Node("Content");
+        contentNode.setPosition(0, 0);
+        var contentLabel = contentNode.addComponent(cc.Label);
+        contentLabel.string = helpContent.join('\n');
+        contentLabel.fontSize = 18;
+        contentLabel.lineHeight = 26;
+        contentLabel.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        contentLabel.overflow = cc.Label.Overflow.RESIZE_HEIGHT;
+        contentLabel.wrapWidth = bgWidth - 60;
+        contentNode.color = cc.color(220, 220, 220);
+        contentNode.parent = dialog;
+        
+        // 关闭按钮
+        var closeBtn = new cc.Node("CloseBtn");
+        closeBtn.setPosition(bgWidth/2 - 25, bgHeight/2 - 25);
+        closeBtn.setContentSize(cc.size(36, 36));
+        var closeGraphics = closeBtn.addComponent(cc.Graphics);
+        closeGraphics.fillColor = cc.color(80, 80, 80, 200);
+        closeGraphics.circle(0, 0, 18);
+        closeGraphics.fill();
+        closeBtn.parent = dialog;
+        
+        var closeX = new cc.Node("X");
+        var closeXLabel = closeX.addComponent(cc.Label);
+        closeXLabel.string = "✕";
+        closeXLabel.fontSize = 20;
+        closeXLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        closeX.color = cc.color(255, 255, 255);
+        closeX.parent = closeBtn;
+        
+        closeBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            dialog.destroy();
+        });
+        
+        // 确定按钮
+        var confirmBtn = new cc.Node("ConfirmBtn");
+        confirmBtn.setPosition(0, -bgHeight/2 + 40);
+        confirmBtn.setContentSize(cc.size(120, 40));
+        var confirmGraphics = confirmBtn.addComponent(cc.Graphics);
+        confirmGraphics.fillColor = cc.color(100, 180, 100, 255);
+        confirmGraphics.roundRect(-60, -20, 120, 40, 8);
+        confirmGraphics.fill();
+        confirmBtn.parent = dialog;
+        
+        var confirmLabel = new cc.Node("Label");
+        var confirmLabelComp = confirmLabel.addComponent(cc.Label);
+        confirmLabelComp.string = "我知道了";
+        confirmLabelComp.fontSize = 18;
+        confirmLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        confirmLabel.color = cc.color(255, 255, 255);
+        confirmLabel.parent = confirmBtn;
+        
+        confirmBtn.on(cc.Node.EventType.TOUCH_END, function(event) {
+            event.stopPropagation();
+            dialog.destroy();
+        });
     },
     
     // 场景销毁时清理资源
