@@ -374,6 +374,9 @@ cc.Class({
         var self = this;
         if (!this.headimage) return;
 
+        // 【新增】为头像添加圆形遮罩实现圆角效果
+        this._addCircleMaskToAvatar();
+
         if (!avatarUrl) {
             this._loadDefaultAvatar();
             return;
@@ -405,6 +408,39 @@ cc.Class({
                 }
             });
         }
+    },
+
+    // 【新增】为头像添加圆形遮罩实现圆角效果
+    _addCircleMaskToAvatar: function() {
+        if (!this.headimage || !this.headimage.node) return;
+        
+        var headNode = this.headimage.node;
+        var parentNode = headNode.parent;
+        if (!parentNode) return;
+
+        // 检查是否已经有遮罩节点
+        var existingMask = parentNode.getChildByName("avatar_mask");
+        if (existingMask) return;
+
+        // 创建遮罩节点
+        var maskNode = new cc.Node("avatar_mask");
+        maskNode.setPosition(headNode.x, headNode.y);
+        maskNode.setContentSize(headNode.width, headNode.height);
+        maskNode.anchorX = 0.5;
+        maskNode.anchorY = 0.5;
+
+        // 添加 Mask 组件 - 使用圆形遮罩
+        var mask = maskNode.addComponent(cc.Mask);
+        mask.type = cc.Mask.Type.ELLIPSE;  // 椭圆形遮罩（圆形）
+        mask.segements = 64;  // 圆滑度
+
+        // 将头像节点移动到遮罩节点下
+        headNode.parent = maskNode;
+        headNode.x = 0;
+        headNode.y = 0;
+
+        // 将遮罩节点添加到原父节点
+        maskNode.parent = parentNode;
     },
 
     _loadDefaultAvatar: function() {
@@ -5488,28 +5524,134 @@ cc.Class({
         var playerNode = this.node.getChildByName("player_node");
         if (!playerNode) return;
         
+        // 获取用户名节点位置作为参考
+        var nicknameNode = playerNode.getChildByName("nickname_label");
+        var nicknameY = nicknameNode ? nicknameNode.y : 43;
+        var nicknameX = nicknameNode ? nicknameNode.x : 140;
+        
+        // 隐藏原来的金豆图标和金框（我们将创建新的显示）
         var yuanbaoIcon = playerNode.getChildByName("yuanbaoIcon");
         var goldFrame = playerNode.getChildByName("gold_frame");
+        if (yuanbaoIcon) yuanbaoIcon.active = false;
+        if (goldFrame) goldFrame.active = false;
         
-        // 调整金豆图标位置
-        if (yuanbaoIcon) {
-            yuanbaoIcon.y = 80;
-            yuanbaoIcon.x = -50;  // 向左偏移
-        }
-        if (goldFrame) {
-            goldFrame.y = 80;
+        // 创建欢乐豆显示容器
+        var happyBeanContainer = this._createCurrencyDisplayNode(
+            playerNode, 
+            "happy_bean_display", 
+            "欢乐豆", 
+            nicknameX - 5,
+            nicknameY - 35,  // 用户名下方
+            cc.color(255, 215, 0)  // 金色
+        );
+        
+        // 创建竞技币显示容器
+        var arenaCoinContainer = this._createCurrencyDisplayNode(
+            playerNode, 
+            "arena_coin_display", 
+            "竞技币", 
+            nicknameX - 5,
+            nicknameY - 70,  // 欢乐豆下方
+            cc.color(100, 200, 255)  // 蓝色
+        );
+        
+        // 存储引用，方便后续更新
+        this._happyBeanLabelNode = happyBeanContainer ? happyBeanContainer.getChildByName("value_label") : null;
+        this._arenaCoinLabelNode = arenaCoinContainer ? arenaCoinContainer.getChildByName("value_label") : null;
+        
+        // 立即更新显示值
+        this._updateBothCurrencyDisplay();
+    },
+    
+    // 【新增】创建货币显示节点
+    // name: 节点名称
+    // labelText: 标签文字（如"欢乐豆"、"竞技币"）
+    // x, y: 位置
+    // color: 颜色
+    _createCurrencyDisplayNode: function(parentNode, name, labelText, x, y, color) {
+        if (!parentNode) return null;
+        
+        // 检查是否已存在
+        var existing = parentNode.getChildByName(name);
+        if (existing) return existing;
+        
+        // 创建容器节点
+        var container = new cc.Node(name);
+        container.setPosition(x, y);
+        container.anchorX = 0;
+        container.anchorY = 0.5;
+        container.zIndex = 100;
+        container.parent = parentNode;
+        
+        // 创建标签文字（如"欢乐豆:"）
+        var labelNode = new cc.Node("name_label");
+        labelNode.anchorX = 0;
+        labelNode.anchorY = 0.5;
+        labelNode.x = 0;
+        labelNode.y = 0;
+        var label = labelNode.addComponent(cc.Label);
+        label.string = labelText + ": ";
+        label.fontSize = 18;
+        label.lineHeight = 24;
+        label.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        labelNode.color = color;
+        
+        // 添加描边
+        var outline = labelNode.addComponent(cc.LabelOutline);
+        outline.color = cc.color(0, 0, 0);
+        outline.width = 1;
+        
+        labelNode.parent = container;
+        
+        // 创建数值显示
+        var valueNode = new cc.Node("value_label");
+        valueNode.anchorX = 0;
+        valueNode.anchorY = 0.5;
+        valueNode.x = labelText.length * 18 + 10;  // 根据标签文字长度计算位置
+        valueNode.y = 0;
+        var valueLabel = valueNode.addComponent(cc.Label);
+        valueLabel.string = "0";
+        valueLabel.fontSize = 18;
+        valueLabel.lineHeight = 24;
+        valueLabel.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
+        valueNode.color = cc.color(255, 255, 255);
+        
+        // 添加描边
+        var valueOutline = valueNode.addComponent(cc.LabelOutline);
+        valueOutline.color = cc.color(0, 0, 0);
+        valueOutline.width = 1;
+        
+        valueNode.parent = container;
+        
+        return container;
+    },
+    
+    // 【新增】同时更新欢乐豆和竞技币显示
+    _updateBothCurrencyDisplay: function() {
+        var myglobal = window.myglobal;
+        var playerData = myglobal ? myglobal.playerData : null;
+        
+        if (!playerData) return;
+        
+        // 更新欢乐豆显示
+        if (this._happyBeanLabelNode) {
+            var label = this._happyBeanLabelNode.getComponent(cc.Label);
+            if (label) {
+                label.string = this._formatGold(playerData.gobal_count || 0);
+            }
         }
         
-        // 调整金币文字位置 - 放在金豆图标后面
-        if (this.gobal_count && this.gobal_count.node) {
-            var labelNode = this.gobal_count.node;
-            var widget = labelNode.getComponent(cc.Widget);
-            if (widget) widget.enabled = false;
-            
-            // 文字放在金豆图标右侧
-            labelNode.anchorX = 0;  // 左锚点，从左侧开始
-            labelNode.x = 20;       // 金豆图标后面20px
-            labelNode.y = 80;       // 与金豆图标同一高度
+        // 更新竞技币显示
+        if (this._arenaCoinLabelNode) {
+            var label = this._arenaCoinLabelNode.getComponent(cc.Label);
+            if (label) {
+                label.string = this._formatGold(playerData.arena_coin || 0);
+            }
+        }
+        
+        // 同时也更新原来的 gobal_count（兼容性）
+        if (this.gobal_count) {
+            this.gobal_count.string = this._formatGold(playerData.gobal_count || 0);
         }
     },
     
@@ -5959,6 +6101,7 @@ cc.Class({
     
     // ============================================================
     // 【竞技场功能】更新货币显示（欢乐豆/竞技币）
+    // 修改：同时显示欢乐豆和竞技币，而不是切换显示
     // ============================================================
     _updateCurrencyDisplay: function() {
         var myglobal = window.myglobal;
@@ -5966,22 +6109,8 @@ cc.Class({
         
         if (!playerData) return;
         
-        var roomCategory = this._currentRoomCategory || 1;
-        
-        if (roomCategory === 2) {
-            // 竞技场 - 显示竞技币
-            if (this.gobal_count) {
-                this.gobal_count.string = ":" + this._formatGold(playerData.arena_coin || 0);
-            }
-            // 隐藏欢乐豆图标，显示竞技币图标（如果有）
-            this._updateCurrencyIcon(2);
-        } else {
-            // 普通场 - 显示欢乐豆
-            if (this.gobal_count) {
-                this.gobal_count.string = ":" + this._formatGold(playerData.gobal_count || 0);
-            }
-            this._updateCurrencyIcon(1);
-        }
+        // 同时更新欢乐豆和竞技币显示
+        this._updateBothCurrencyDisplay();
     },
     
     // 更新货币图标
@@ -6018,15 +6147,18 @@ cc.Class({
     },
     
     // 初始化竞技币显示
+    // 修改：货币显示已在 _adjustGoldElementsPosition 中统一创建，这里只需要确保数据更新
     _initArenaCoinDisplay: function() {
         var myglobal = window.myglobal;
         var playerData = myglobal ? myglobal.playerData : null;
         
-        // 如果有竞技币Label，初始化显示
+        // 如果有竞技币Label属性，更新显示
         if (this.arena_coin_label && playerData) {
             this.arena_coin_label.string = "竞技币: " + this._formatGold(playerData.arena_coin || 0);
-            this.arena_coin_label.node.active = false; // 默认隐藏
         }
+        
+        // 确保新创建的货币显示节点也已更新
+        this._updateBothCurrencyDisplay();
     },
     
     // 获取最新的玩家余额（金币和竞技币）
