@@ -5524,20 +5524,17 @@ cc.Class({
         var playerNode = this.node.getChildByName("player_node");
         if (!playerNode) return;
         
-        // 获取头像背景节点，计算货币显示位置（距离头像10px）
+        // 获取头像背景节点，计算货币显示位置
         var headBg = playerNode.getChildByName("head_bg");
         var headRightEdge = 135;  // 头像右边缘约 85 + 50
-        var currencyStartX = headRightEdge + 15;  // 距离头像15px开始
+        var currencyStartX = headRightEdge + 10;  // 距离头像10px开始
         
         // 获取用户名节点位置作为参考
         var nicknameNode = playerNode.getChildByName("nickname_label");
         var nicknameY = nicknameNode ? nicknameNode.y : 43;
-        var nicknameX = nicknameNode ? nicknameNode.x : 140;
         
-        // 【调整】将用户昵称往上移动一点，减少拥挤感
-        if (nicknameNode) {
-            nicknameNode.y = nicknameY + 8;  // 往上移动8像素
-        }
+        // 昵称位置保持不变，货币显示在昵称下方
+        // 昵称高度约40px，货币显示在昵称下方20px处
         
         // 隐藏原来的金豆图标、金框和原来的金币显示节点（避免重复显示）
         var yuanbaoIcon = playerNode.getChildByName("yuanbaoIcon");
@@ -5548,12 +5545,13 @@ cc.Class({
         if (oldGobalLabel) oldGobalLabel.active = false;  // 隐藏原来的金币显示，避免重复
         
         // 创建货币显示容器（欢乐豆和竞技币放在同一行）
-        // 位置：距离头像15px，垂直居中
+        // 位置：距离头像10px，在昵称下方
+        var currencyY = nicknameY - 28;  // 昵称下方28px，避免重叠
         var currencyContainer = this._createCurrencyContainerRow(
             playerNode, 
             "currency_display_row", 
-            currencyStartX,  // 距离头像15px
-            40  // 垂直居中位置
+            currencyStartX,  // 距离头像10px
+            currencyY        // 昵称下方
         );
         
         // 存储引用，方便后续更新
@@ -5579,18 +5577,18 @@ cc.Class({
         }
         
         // ========== 布局参数 ==========
-        var containerHeight = 60;   // 容器高度60px
+        var containerHeight = 40;   // 容器高度40px
         var iconSize = 22;          // 图标大小22px
-        var valueFontSize = 22;     // 数字字体大小
-        var iconTextGap = 8;        // 图标与数字间距
-        var currencyGap = 35;       // 两种货币之间的间距
+        var valueFontSize = 20;     // 数字字体大小
+        var iconTextGap = 6;        // 图标与数字间距
+        var currencyGap = 25;       // 两种货币之间的间距
         
         // ========== 创建容器节点 ==========
         var container = new cc.Node(name);
         container.setPosition(x, y);
         container.anchorX = 0;
         container.anchorY = 0.5;    // 垂直居中锚点
-        container.setContentSize(250, containerHeight);  // 设置固定高度
+        container.setContentSize(200, containerHeight);  // 设置固定高度40px
         container.zIndex = 100;
         container.parent = parentNode;
         
@@ -5617,12 +5615,12 @@ cc.Class({
         var happyBeanText = happyBeanTextNode.addComponent(cc.Label);
         happyBeanText.string = "豆";
         happyBeanText.fontSize = 13;
-        happyBeanText.lineHeight = 18;
+        happyBeanText.lineHeight = 16;
         happyBeanText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
         happyBeanTextNode.color = cc.color(139, 69, 19);  // 深棕色
         happyBeanTextNode.parent = happyBeanIcon;
         
-        // 欢乐豆数值 - line-height与容器高度一致，实现垂直居中
+        // 欢乐豆数值 - line-height=40px，垂直居中
         var happyBeanValueLabel = new cc.Node("happy_bean_value");
         happyBeanValueLabel.anchorX = 0;
         happyBeanValueLabel.anchorY = 0.5;  // 垂直居中
@@ -5631,7 +5629,7 @@ cc.Class({
         var happyBeanValue = happyBeanValueLabel.addComponent(cc.Label);
         happyBeanValue.string = "0";
         happyBeanValue.fontSize = valueFontSize;
-        happyBeanValue.lineHeight = containerHeight;  // line-height = 60px
+        happyBeanValue.lineHeight = containerHeight;  // line-height = 40px
         happyBeanValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
         happyBeanValue.verticalAlign = cc.Label.VerticalAlign.CENTER;  // 垂直居中
         happyBeanValueLabel.color = cc.color(255, 215, 0);  // 金色
@@ -5641,7 +5639,7 @@ cc.Class({
         happyBeanValueLabel.parent = container;
         
         // ========== 竞技币显示 ==========
-        var arenaStartX = iconSize + iconTextGap + 70 + currencyGap;  // 欢乐豆区域 + 间距
+        var arenaStartX = iconSize + iconTextGap + 55 + currencyGap;  // 欢乐豆区域 + 间距
         
         // 竞技币图标 - 22px圆形带"币"字
         var arenaCoinIcon = new cc.Node("arena_coin_icon");
@@ -5665,12 +5663,12 @@ cc.Class({
         var arenaCoinText = arenaCoinTextNode.addComponent(cc.Label);
         arenaCoinText.string = "币";
         arenaCoinText.fontSize = 13;
-        arenaCoinText.lineHeight = 18;
+        arenaCoinText.lineHeight = 16;
         arenaCoinText.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
         arenaCoinTextNode.color = cc.color(255, 255, 255);  // 白色
         arenaCoinTextNode.parent = arenaCoinIcon;
         
-        // 竞技币数值 - line-height与容器高度一致，实现垂直居中
+        // 竞技币数值 - line-height=40px，垂直居中
         var arenaCoinValueLabel = new cc.Node("arena_coin_value");
         arenaCoinValueLabel.anchorX = 0;
         arenaCoinValueLabel.anchorY = 0.5;  // 垂直居中
@@ -5679,7 +5677,7 @@ cc.Class({
         var arenaCoinValue = arenaCoinValueLabel.addComponent(cc.Label);
         arenaCoinValue.string = "0";
         arenaCoinValue.fontSize = valueFontSize;
-        arenaCoinValue.lineHeight = containerHeight;  // line-height = 60px
+        arenaCoinValue.lineHeight = containerHeight;  // line-height = 40px
         arenaCoinValue.horizontalAlign = cc.Label.HorizontalAlign.LEFT;
         arenaCoinValue.verticalAlign = cc.Label.VerticalAlign.CENTER;  // 垂直居中
         arenaCoinValueLabel.color = cc.color(100, 200, 255);  // 蓝色
