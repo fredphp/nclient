@@ -1,0 +1,144 @@
+{
+  "appVersion": "1.0.0",
+  "appKey": "",
+  "appBundleUrl": "",
+  "buildPath": "build",
+  "debugBuild": true,
+  "inlineSpriteFrames": true,
+  "md5Cache": false,
+  "useBuiltinServer": true,
+  "webOrientation": "landscape",
+  "useCustomDefaultFont": false,
+  "defaultFontPath": "",
+  "nativeCode": {
+    "java": "",
+    "objc": ""
+  },
+  "wx": {
+    "appid": "",
+    "orientation": "portrait",
+    "subContext": "",
+    "deviceOrientation": "portrait",
+    "separateEngine": false,
+    "subpackages": [],
+    "wasmSubpackage": false,
+    "useCustomManifest": false,
+    "customManifestPath": ""
+  },
+  "android": {
+    "packageName": "com.game.nclient",
+    "targetApiLevel": "android-28",
+    "appABIs": [
+      "armeabi-v7a",
+      "arm64-v8a"
+    ],
+    "sdkPath": "",
+    "ndkPath": "",
+    "orientation": {
+      "landscapeLeft": true,
+      "landscapeRight": true,
+      "portrait": false,
+      "upsideDown": false
+    },
+    "keystorePath": "",
+    "keystorePassword": "",
+    "keystoreAlias": "",
+    "keystoreAliasPassword": "",
+    "useDebugKeystore": true,
+    "useCustomManifest": false,
+    "customManifestPath": "",
+    "apiLevel": "android-28",
+    "appBundle": false,
+    "googlePlayInstant": false,
+    "skipPrebuildCrashReport": true,
+    "REMOTE_SERVER_ROOT": ""
+  },
+  "ios": {
+    "packageName": "com.game.nclient",
+    "sdkPath": "",
+    "targetSdkVersion": "",
+    "orientation": {
+      "landscapeLeft": true,
+      "landscapeRight": true,
+      "portrait": false,
+      "upsideDown": false
+    },
+    "iosDevelopmentTeam": "",
+    "iosProvisioningProfile": "",
+    "iosProvisioningProfileName": "",
+    "iosBundleIdentifier": "com.game.nclient",
+    "iosEnableBitcode": false,
+    "iosCustomUrlScheme": [],
+    "iosDeviceFamily": [
+      1,
+      2
+    ],
+    "skipPrebuildCrashReport": true,
+    "REMOTE_SERVER_ROOT": "",
+    "ios_enable_jit": true
+  },
+  "mac": {
+    "packageName": "com.game.nclient",
+    "buildVersion": "1.0.0",
+    "skipPrebuildCrashReport": true,
+    "REMOTE_SERVER_ROOT": "",
+    "width": 1280,
+    "height": 720
+  },
+  "windows": {
+    "packageName": "com.game.nclient",
+    "buildVersion": "1.0.0",
+    "skipPrebuildCrashReport": true
+  },
+  "win32": {
+    "skipPrebuildCrashReport": true,
+    "REMOTE_SERVER_ROOT": "",
+    "width": 1280,
+    "height": 720
+  },
+  "webMobile": {
+    "embedWebDebugger": false
+  },
+  "fbInstant": {
+    "appid": "",
+    "orientation": "portrait"
+  },
+  "anySDK": {},
+  "subpackages": [],
+  "customCompilerOptions": {},
+  "title": "nclient",
+  "packageName": "org.cocos2d.demo",
+  "startScene": "347f62d6-8f34-42dc-981d-a0459890e888",
+  "excludeScenes": [],
+  "orientation": {
+    "landscapeRight": true,
+    "landscapeLeft": true,
+    "portrait": false,
+    "upsideDown": false
+  },
+  "inlineSpriteFrames_native": true,
+  "mainCompressionType": "default",
+  "mainIsRemote": false,
+  "optimizeHotUpdate": false,
+  "nativeMd5Cache": true,
+  "encryptJs": true,
+  "xxteaKey": "4421aa99-d657-48",
+  "zipCompressJs": false,
+  "fb-instant-games": {},
+  "android-instant": {
+    "packageName": "org.cocos2d.demo",
+    "REMOTE_SERVER_ROOT": "",
+    "pathPattern": "",
+    "scheme": "https",
+    "host": "",
+    "skipRecord": false,
+    "recordPath": ""
+  },
+  "harmonyos-next": {
+    "packageName": "org.cocos2d.demo",
+    "REMOTE_SERVER_ROOT": "",
+    "jsEngine": "JSVM"
+  },
+  "appBundle": false,
+  "agreements": {}
+}

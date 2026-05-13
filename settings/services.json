@@ -1,0 +1,43 @@
+{
+	"agora": {
+		"appId": "",
+		"enabled": false
+	},
+	"analytics": {
+		"enabled": false,
+		"services": {
+			"firebase": {
+				"enabled": false,
+				"apiKey": "",
+				"authDomain": "",
+				"databaseURL": "",
+				"projectId": "",
+				"storageBucket": "",
+				"messagingSenderId": "",
+				"appId": ""
+			}
+		}
+	},
+	"advertising": {
+		"enabled": false
+	},
+	"user": {
+		"enabled": false
+	},
+	"payment": {
+		"enabled": false
+	},
+	"push": {
+		"enabled": false
+	},
+	"crash": {
+		"enabled": false
+	},
+	"rtc": {
+		"enabled": false
+	},
+	"game": {
+		"name": "未知游戏",
+		"appid": "UNKNOW"
+	}
+}

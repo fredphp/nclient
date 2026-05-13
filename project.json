@@ -1,0 +1,12 @@
+{
+  "engine": "cocos-creator-js",
+  "packages": "packages",
+  "version": "2.4.15",
+  "id": "nclient",
+  "name": "NClient",
+  "title": "NClient Game",
+  "creator": {
+    "version": "2.4.15"
+  },
+  "isNew": false
+}
