@@ -1749,6 +1749,9 @@ cc.Class({
     // 🔧【重构】客户端基于服务端推送的倒计时本地计算
     _startCountdownTimer: function() {
         var self = this;
+        
+        console.log("🏟️ [Arena] ========== 开始初始化竞技场监听器 ==========");
+        console.log("🏟️ [Arena] _startCountdownTimer 被调用");
 
         // 清理旧的定时器
         if (this._countdownTimer) {
@@ -1762,6 +1765,11 @@ cc.Class({
         // 监听服务端推送的竞技场状态
         // 🔧【修复】使用 myglobal.socket 实例，而不是 window.socketCtr 函数
         var socket = window.myglobal && window.myglobal.socket;
+        console.log("🏟️ [Arena] socket 对象:", socket ? "存在" : "不存在");
+        console.log("🏟️ [Arena] socket.onArenaStatus:", socket && socket.onArenaStatus ? "存在" : "不存在");
+        console.log("🏟️ [Arena] socket.onArenaMatchStart:", socket && socket.onArenaMatchStart ? "存在" : "不存在");
+        console.log("🏟️ [Arena] socket.onArenaCloseDialog:", socket && socket.onArenaCloseDialog ? "存在" : "不存在");
+        
         if (socket && socket.onArenaStatus) {
             socket.onArenaStatus(function(data) {
                 if (self.node && self.node.isValid && data && data.arenas) {
@@ -1769,6 +1777,7 @@ cc.Class({
                     self._onArenaStatusPush(data.arenas);
                 }
             });
+            console.log("🏟️ [Arena] ✅ onArenaStatus 监听器注册成功");
         } else {
             console.warn("🏟️ [Arena] socket 或 onArenaStatus 方法不可用，无法监听竞技场状态");
         }
@@ -1776,23 +1785,63 @@ cc.Class({
         // 🔧【新增】监听竞技场比赛开始通知
         if (socket && socket.onArenaMatchStart) {
             socket.onArenaMatchStart(function(data) {
+                console.log("🏆 [Arena] ========== 收到 arena_match_start 消息 ==========");
+                console.log("🏆 [Arena] 数据:", JSON.stringify(data));
                 if (self.node && self.node.isValid) {
+                    console.log("🏆 [Arena] 节点有效，准备显示弹窗");
                     self._onArenaMatchStart(data);
+                } else {
+                    console.warn("🏆 [Arena] 节点无效，无法显示弹窗");
                 }
             });
+            console.log("🏟️ [Arena] ✅ onArenaMatchStart 监听器注册成功");
+        } else {
+            console.warn("🏟️ [Arena] ⚠️ socket 或 onArenaMatchStart 方法不可用");
         }
 
         // 🔧【新增】监听竞技场关闭弹窗通知（新期号开始时关闭上一轮弹窗）
         if (socket && socket.onArenaCloseDialog) {
             socket.onArenaCloseDialog(function(data) {
+                console.log("🏟️ [Arena] 收到关闭弹窗通知:", JSON.stringify(data));
                 if (self.node && self.node.isValid) {
                     self._onArenaCloseDialog(data);
                 }
             });
+            console.log("🏟️ [Arena] ✅ onArenaCloseDialog 监听器注册成功");
+        } else {
+            console.warn("🏟️ [Arena] ⚠️ socket 或 onArenaCloseDialog 方法不可用");
+        }
+        
+        console.log("🏟️ [Arena] ========== 竞技场监听器初始化完成 ==========");
+
+        // 🔧【关键修复】确保连接后请求竞技场状态
+        // 这是解决弹窗不显示问题的核心修复！
+        // 如果 WebSocket 已连接，立即请求；否则主动初始化连接后请求
+        if (socket) {
+            console.log("🏟️ [Arena] 🔄 请求竞技场状态（智能连接）...");
+            // 🔧【改进】直接调用 requestArenaStatusWhenConnected，它会自动处理连接逻辑
+            if (socket.requestArenaStatusWhenConnected) {
+                socket.requestArenaStatusWhenConnected();
+            } else {
+                // 🔧【兜底】如果新方法不存在，先尝试初始化连接再请求
+                console.log("🏟️ [Arena] ⚠️ requestArenaStatusWhenConnected 不存在，尝试初始化连接...");
+                if (socket.initSocket && !socket.isConnected()) {
+                    socket.initSocket();
+                }
+                // 延迟请求，等待连接
+                setTimeout(function() {
+                    if (socket.requestArenaStatus) {
+                        socket.requestArenaStatus();
+                    }
+                }, 1000);
+            }
         }
 
         // 🔧【新增】立即初始化本地状态（使用本地计算作为初始值）
         this._initLocalArenaStatusFromConfig();
+        
+        // 🔧【关键新增】监听页面可见性变化，恢复时重新请求竞技场状态
+        this._setupVisibilityChangeListener();
 
         // 🔧【修改】每秒更新本地倒计时（减1）
         this._countdownTimer = setInterval(function() {
@@ -1802,9 +1851,62 @@ cc.Class({
         }, 1000);
     },
 
+    // 🔧【关键新增】监听页面可见性变化
+    // 当页面从后台恢复时，重新请求竞技场状态，确保不会错过弹窗
+    _setupVisibilityChangeListener: function() {
+        var self = this;
+        
+        // 避免重复注册
+        if (this._visibilityChangeListenerAdded) {
+            return;
+        }
+        this._visibilityChangeListenerAdded = true;
+        
+        // 记录上次请求时间，避免频繁请求
+        this._lastArenaStatusRequestTime = 0;
+        
+        var handleVisibilityChange = function() {
+            if (document.visibilityState === 'visible') {
+                console.log("📱 [Visibility] 页面从后台恢复，重新请求竞技场状态");
+                
+                // 检查是否需要重新请求（避免频繁请求）
+                var now = Date.now();
+                var timeSinceLastRequest = now - self._lastArenaStatusRequestTime;
+                
+                // 如果距离上次请求超过 5 秒，才重新请求
+                if (timeSinceLastRequest > 5000) {
+                    self._lastArenaStatusRequestTime = now;
+                    
+                    // 延迟一点时间，确保 WebSocket 连接恢复
+                    setTimeout(function() {
+                        if (self.node && self.node.isValid) {
+                            var socket = window.myglobal && window.myglobal.socket;
+                            if (socket && socket.requestArenaStatusWhenConnected) {
+                                console.log("🏟️ [Arena] 页面恢复后重新请求竞技场状态");
+                                socket.requestArenaStatusWhenConnected();
+                            }
+                        }
+                    }, 500);
+                } else {
+                    console.log("📱 [Visibility] 距离上次请求时间较短，跳过重新请求");
+                }
+            }
+        };
+        
+        // 注册监听器
+        if (typeof document !== 'undefined' && document.addEventListener) {
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            console.log("📱 [Visibility] 已注册页面可见性监听器");
+            
+            // 保存引用，以便在销毁时移除
+            this._visibilityChangeHandler = handleVisibilityChange;
+        }
+    },
+
     // 🔧【新增】处理竞技场比赛开始通知
     _onArenaMatchStart: function(data) {
         var self = this;
+        console.log("🏆 [Arena] _onArenaMatchStart 开始处理，data:", JSON.stringify(data));
         
         // 🔧【修复】先关闭之前可能存在的弹窗
         this._closeArenaMatchStartDialog();
@@ -1813,6 +1915,7 @@ cc.Class({
         this._currentMatchData = data;
         
         // 弹出进入游戏弹窗
+        console.log("🏆 [Arena] 准备调用 _showArenaMatchStartDialog");
         this._showArenaMatchStartDialog(data);
     },
     
@@ -1820,6 +1923,11 @@ cc.Class({
     _closeArenaMatchStartDialog: function() {
         // 关闭并销毁之前显示的弹窗
         if (this._arenaMatchStartDialog && this._arenaMatchStartDialog.isValid) {
+        // 🔧【新增】清除倒计时定时器
+        if (this._matchStartCountdownTimer) {
+            clearInterval(this._matchStartCountdownTimer);
+            this._matchStartCountdownTimer = null;
+        }
             this._arenaMatchStartDialog.destroy();
             this._arenaMatchStartDialog = null;
         }
@@ -1850,11 +1958,13 @@ cc.Class({
     // 🔧【新增】显示竞技场比赛开始弹窗
     _showArenaMatchStartDialog: function(data) {
         var self = this;
+        console.log("🏆 [Arena] _showArenaMatchStartDialog 开始创建弹窗...");
         
         // 获取画布尺寸
         var canvas = this.node.getComponent(cc.Canvas) || cc.find('Canvas').getComponent(cc.Canvas);
         var screenHeight = canvas ? canvas.designResolution.height : 720;
         var screenWidth = canvas ? canvas.designResolution.width : 1280;
+        console.log("🏆 [Arena] 屏幕尺寸:", screenWidth, "x", screenHeight);
         
         // 创建弹窗容器
         var dialogNode = new cc.Node("ArenaMatchStartDialog");
@@ -1865,6 +1975,7 @@ cc.Class({
         dialogNode.y = 0;
         dialogNode.zIndex = 5000;
         dialogNode.parent = this.node;
+        console.log("🏆 [Arena] 弹窗容器已创建，zIndex=", dialogNode.zIndex);
         
         // 🔧【修复】保存弹窗引用，用于后续关闭
         this._arenaMatchStartDialog = dialogNode;
@@ -1938,6 +2049,66 @@ cc.Class({
         playersLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
         playersNode.color = cc.color(100, 200, 100);
         playersNode.parent = cardNode;
+        
+        // 🔧【新增】倒计时显示 - 使用服务端返回的 start_time 计算剩余时间
+        var countdownNode = new cc.Node("Countdown");
+        countdownNode.y = cardHeight/2 - 200;
+        var countdownLabel = countdownNode.addComponent(cc.Label);
+        
+        // 计算剩余时间：优先使用 start_time，否则使用 countdown
+        var remainingSeconds = data.countdown || 60;
+        if (data.start_time) {
+            var nowMs = Date.now();
+            var elapsedMs = nowMs - data.start_time;
+            var elapsedSec = Math.floor(elapsedMs / 1000);
+            remainingSeconds = Math.max(0, (data.countdown || 60) - elapsedSec);
+            console.log("🏆 [Arena] 使用 start_time 计算剩余时间: start_time=" + data.start_time + ", now=" + nowMs + ", elapsed=" + elapsedSec + "s, remaining=" + remainingSeconds + "s");
+        }
+        
+        countdownLabel.string = "倒计时: " + remainingSeconds + " 秒";
+        countdownLabel.fontSize = 24;
+        countdownLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        countdownNode.color = cc.color(255, 100, 100);
+        countdownNode.parent = cardNode;
+        
+        // 🔧【新增】启动倒计时定时器
+        if (self._matchStartCountdownTimer) {
+            clearInterval(self._matchStartCountdownTimer);
+        }
+        self._matchStartCountdownTimer = setInterval(function() {
+            if (!dialogNode || !dialogNode.isValid) {
+                clearInterval(self._matchStartCountdownTimer);
+                self._matchStartCountdownTimer = null;
+                return;
+            }
+            
+            // 重新计算剩余时间
+            var newRemaining = data.countdown || 60;
+            if (data.start_time) {
+                var nowMs = Date.now();
+                var elapsedMs = nowMs - data.start_time;
+                var elapsedSec = Math.floor(elapsedMs / 1000);
+                newRemaining = Math.max(0, (data.countdown || 60) - elapsedSec);
+            } else {
+                newRemaining = remainingSeconds - 1;
+            }
+            remainingSeconds = newRemaining;
+            
+            if (newRemaining <= 0) {
+                clearInterval(self._matchStartCountdownTimer);
+                self._matchStartCountdownTimer = null;
+                countdownLabel.string = "已超时";
+                countdownLabel.color = cc.color(150, 150, 150);
+                return;
+            }
+            
+            countdownLabel.string = "倒计时: " + newRemaining + " 秒";
+            
+            // 最后10秒变红闪烁
+            if (newRemaining <= 10) {
+                countdownLabel.color = newRemaining % 2 === 0 ? cc.color(255, 50, 50) : cc.color(255, 150, 150);
+            }
+        }, 1000);
         
         // 提示消息
         var msgNode = new cc.Node("Message");
@@ -2042,6 +2213,9 @@ cc.Class({
             self._arenaMatchStartDialogPeriodNo = null;
             dialogNode.destroy();
         });
+        
+        console.log("🏆 [Arena] ✅ 弹窗创建完成！dialogNode.parent =", dialogNode.parent ? "已挂载" : "未挂载");
+        console.log("🏆 [Arena] 弹窗子节点数量:", dialogNode.children.length);
     },
 
     // 🔧【新增】取消竞技场报名并退还竞技币
@@ -8294,6 +8468,12 @@ cc.Class({
         // 清理竞技场倒计时
         if (window.arenaData && window.arenaData.clearAllCountdowns) {
             window.arenaData.clearAllCountdowns();
+        }
+        
+        // 🔧【新增】移除页面可见性监听器
+        if (this._visibilityChangeHandler && document.removeEventListener) {
+            document.removeEventListener('visibilitychange', this._visibilityChangeHandler);
+            this._visibilityChangeHandler = null;
         }
         
         // 停止在线状态监测（大厅场景需要持续监测，所以只有场景销毁时才停止）

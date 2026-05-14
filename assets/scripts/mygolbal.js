@@ -441,7 +441,7 @@
         // 定时检查连接状态
         this._connectionCheckInterval = setInterval(function() {
             self._checkOnlineStatus();
-        }, 5000); // 每5秒检查一次
+        }, 10000); // 🔧【修复】检查间隔改为10秒，避免过于频繁
         
         // 定时检查 Token 有效性（每5分钟）
         this._tokenCheckInterval = setInterval(function() {
@@ -473,6 +473,13 @@
         // 监听心跳成功
         if (this.eventlister) {
             this.eventlister.on("heartbeat_success", function(data) {
+                self._lastActivityTime = Date.now();
+                self._setOnlineStatus(true);
+            });
+            
+            // 🔧【新增】监听自动重连成功事件
+            this.eventlister.on("auto_reconnect_success", function(data) {
+                console.log("✅ [mygolbal] 自动重连成功，更新在线状态");
                 self._lastActivityTime = Date.now();
                 self._setOnlineStatus(true);
             });
@@ -539,25 +546,34 @@
         // 也检查逻辑连接状态（服务器确认）
         var isServerConfirmed = this.socket && this.socket.isConnected && this.socket.isConnected();
         
-        // 检查是否超时不活动
-        var inactiveTime = Date.now() - this._lastActivityTime;
-        var isInactive = inactiveTime > this._inactiveTimeout;
+        // 🔧【修复】只要 WebSocket 物理连接正常就认为在线
+        // 不再检查不活动时间，因为这会导致误报
+        // 心跳机制会处理真正的连接问题
+        var isOnline = isWebSocketOpen || isServerConfirmed;
         
-        // 调试信息
-        
-        // 在线条件：
-        // 1. WebSocket 物理连接成功（readyState === OPEN）
-        // 2. 或者服务器已确认连接（_isConnected === true）
-        // 3. 且用户在活动
-        var isOnline = (isWebSocketOpen || isServerConfirmed) && !isInactive;
-        
-        
-        // 更新在线状态
-        this._setOnlineStatus(isOnline);
-        
-        // 如果不活动时间过长，提示用户
-        if (isInactive && (isWebSocketOpen || isServerConfirmed)) {
-            console.warn("⚠️ 用户长时间不活动，可能需要重新验证");
+        // 🔧【修复】只有当 WebSocket 物理连接断开时才更新离线状态
+        // 这样可以避免因为短暂的网络波动而误报
+        if (!isOnline && this._isOnline) {
+            // 延迟一小段时间再判定离线，给重连机制时间
+            var self = this;
+            if (!this._offlineCheckTimer) {
+                this._offlineCheckTimer = setTimeout(function() {
+                    // 再次检查
+                    var stillOffline = !(self.socket && self.socket.isWebSocketOpen && self.socket.isWebSocketOpen());
+                    if (stillOffline) {
+                        self._setOnlineStatus(false);
+                    }
+                    self._offlineCheckTimer = null;
+                }, 3000); // 3秒后再确认
+            }
+        } else if (isOnline) {
+            // 清除离线检查定时器
+            if (this._offlineCheckTimer) {
+                clearTimeout(this._offlineCheckTimer);
+                this._offlineCheckTimer = null;
+            }
+            // 更新在线状态
+            this._setOnlineStatus(true);
         }
     };
     

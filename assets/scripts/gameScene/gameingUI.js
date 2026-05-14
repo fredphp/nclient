@@ -77,6 +77,9 @@ cc.Class({
             console.error("myglobal 未定义")
             return
         }
+        
+        // 🔧【关键修复】预加载卡牌精灵图集
+        this._preloadCardAtlas()
 
         // 🔧【修复】确保手牌容器节点存在
         if (!this.cards_node) {
@@ -522,6 +525,27 @@ cc.Class({
     },
 
     start () {},
+    
+    /**
+     * 🔧【新增】预加载卡牌精灵图集
+     * 确保在发牌之前图集已经准备好
+     */
+    _preloadCardAtlas: function() {
+        // 检查是否已经加载
+        if (window._cardAtlasLoaded) {
+            return
+        }
+        
+        cc.resources.load("UI/card/card", cc.SpriteAtlas, function(err, atlas) {
+            if (err) {
+                console.error("🃏 [_preloadCardAtlas] 加载卡牌图集失败:", err)
+                return
+            }
+            window._cardAtlasLoaded = true
+            window._cardAtlas = atlas
+            console.log("🃏 [_preloadCardAtlas] 卡牌图集预加载成功")
+        })
+    },
     
     onDestroy () {
         this._stopPlayCountdown()

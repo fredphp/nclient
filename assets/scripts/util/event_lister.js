@@ -11,6 +11,19 @@ window.eventLister = function(obj){
         }
     }
 
+    // 🔧【新增】移除单个事件监听器
+    obj.off = function(type, method){
+        if(register.hasOwnProperty(type)){
+            var methodList = register[type]
+            for(var i = methodList.length - 1; i >= 0; --i){
+                if(methodList[i] === method){
+                    methodList.splice(i, 1)
+                    break  // 只移除第一个匹配的
+                }
+            }
+        }
+    }
+
     obj.fire = function(type){
         if(register.hasOwnProperty(type)) {
             var methodList = register[type]

@@ -619,9 +619,9 @@ cc.Class({
         var url = defines.apiUrl + '/api/v1/auth/send-code';
         var cryptoKey = defines.cryptoKey || "";
 
-        // 使用HttpAPI.post发送请求（支持加密解密）
-        if (window.HttpAPI) {
-            window.HttpAPI.post(url, { phone: phone }, cryptoKey, function(err, result) {
+        // 使用HttpAPI.postEncrypted发送加密请求
+        if (window.HttpAPI && window.HttpAPI.postEncrypted) {
+            window.HttpAPI.postEncrypted(url, 'send_code', { phone: phone }, cryptoKey, function(err, result) {
                 if (err) {
                     console.error("发送验证码失败:", err);
                     callback(false, err);
@@ -707,9 +707,9 @@ cc.Class({
         };
 
 
-        // 使用HttpAPI.post发送请求（支持加密解密）
-        if (window.HttpAPI && window.HttpAPI.post) {
-            window.HttpAPI.post(url, requestData, cryptoKey, function(err, result) {
+        // 使用HttpAPI.postEncrypted发送加密请求
+        if (window.HttpAPI && window.HttpAPI.postEncrypted) {
+            window.HttpAPI.postEncrypted(url, 'phone_login', requestData, cryptoKey, function(err, result) {
                 if (err) {
                     console.error("登录请求失败:", err);
                     callback(false, err, null);
