@@ -1615,7 +1615,7 @@ window.socketCtr = function(){
 
     // 🏆 监听冠军跑马灯广播
     that.onArenaChampionBroadcast = function(callback){
-        var evt = that.getEvt()
+        var evt = _getEvent()
         if (evt) evt.on("arena_champion_broadcast_notify", callback)
     }
 

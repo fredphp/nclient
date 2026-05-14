@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "btn_no_baoming_backup",
+    "texture": "d0d79e2e-344b-43f1-ac19-e9e1b17ea9bc",
+    "atlas": "",
+    "rect": [
+      62,
+      59,
+      191,
+      67
+    ],
+    "offset": [
+      7.5,
+      7.5
+    ],
+    "originalSize": [
+      300,
+      200
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}
