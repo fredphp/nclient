@@ -1811,6 +1811,19 @@ cc.Class({
         } else {
             console.warn("🏟️ [Arena] ⚠️ socket 或 onArenaCloseDialog 方法不可用");
         }
+
+        // 🏆 监听冠军跑马灯广播
+        if (socket && socket.onArenaChampionBroadcast) {
+            socket.onArenaChampionBroadcast(function(data) {
+                console.log("🏆 [Arena] 收到冠军跑马灯广播:", JSON.stringify(data));
+                if (self.node && self.node.isValid) {
+                    self._showChampionBroadcast(data);
+                }
+            });
+            console.log("🏆 [Arena] ✅ onArenaChampionBroadcast 监听器注册成功");
+        } else {
+            console.warn("🏆 [Arena] ⚠️ socket 或 onArenaChampionBroadcast 方法不可用");
+        }
         
         console.log("🏟️ [Arena] ========== 竞技场监听器初始化完成 ==========");
 
@@ -1953,6 +1966,76 @@ cc.Class({
                 this._closeArenaMatchStartDialog();
             }
         }
+    },
+
+    // 🏆 显示冠军跑马灯广播
+    _showChampionBroadcast: function(data) {
+        console.log("🏆 [Champion] 显示冠军跑马灯:", data.message);
+        
+        var self = this;
+        
+        // 构建跑马灯消息
+        var message = data.message || ("恭喜 " + data.champion_name + " 在期号 " + data.period_no + " 夺得" + (data.room_name || "竞技场") + "冠军！");
+        
+        // 获取画布尺寸
+        var canvas = this.node.getComponent(cc.Canvas) || cc.find('Canvas').getComponent(cc.Canvas);
+        var screenHeight = canvas ? canvas.designResolution.height : 720;
+        var screenWidth = canvas ? canvas.designResolution.width : 1280;
+        
+        // 创建跑马灯节点
+        var marqueeNode = new cc.Node("ChampionMarquee");
+        marqueeNode.setPosition(cc.v2(0, screenHeight / 2 - 80)); // 顶部位置
+        marqueeNode.setLocalZOrder(9999); // 最高层级
+        
+        // 背景
+        var bgNode = new cc.Node("Bg");
+        bgNode.setContentSize(cc.size(screenWidth - 40, 50));
+        var bgGraphics = bgNode.addComponent(cc.Graphics);
+        bgGraphics.fillColor = cc.color(255, 215, 0, 230); // 金色背景
+        bgGraphics.roundRect(-(screenWidth - 40) / 2, -25, screenWidth - 40, 50, 10);
+        bgGraphics.fill();
+        bgNode.parent = marqueeNode;
+        
+        // 冠军图标
+        var iconNode = new cc.Node("Icon");
+        iconNode.setPosition(cc.v2(-screenWidth / 2 + 50, 0));
+        var iconLabel = iconNode.addComponent(cc.Label);
+        iconLabel.string = "🏆";
+        iconLabel.fontSize = 28;
+        iconLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        iconNode.parent = marqueeNode;
+        
+        // 消息文本
+        var textNode = new cc.Node("Text");
+        textNode.setPosition(cc.v2(0, 0));
+        var textLabel = textNode.addComponent(cc.Label);
+        textLabel.string = message;
+        textLabel.fontSize = 22;
+        textLabel.lineHeight = 28;
+        textLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        textNode.color = cc.color(139, 69, 19); // 深棕色文字
+        textNode.parent = marqueeNode;
+        
+        // 添加到场景
+        marqueeNode.parent = this.node;
+        
+        // 动画效果：从上方滑入
+        marqueeNode.y = screenHeight / 2 + 100;
+        var moveIn = cc.moveTo(0.5, cc.v2(0, screenHeight / 2 - 80)).easing(cc.easeBackOut());
+        var delay = cc.delayTime(5); // 显示5秒
+        var moveOut = cc.moveTo(0.5, cc.v2(0, screenHeight / 2 + 100));
+        var remove = cc.callFunc(function() {
+            if (marqueeNode && marqueeNode.isValid) {
+                marqueeNode.destroy();
+            }
+        });
+        
+        marqueeNode.runAction(cc.sequence(moveIn, delay, moveOut, remove));
+        
+        // 播放音效（如果有的话）
+        // cc.audioEngine.playEffect("sounds/champion.mp3", false);
+        
+        console.log("🏆 [Champion] 跑马灯显示完成:", message);
     },
 
     // 🔧【新增】显示竞技场比赛开始弹窗
