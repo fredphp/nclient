@@ -132,6 +132,8 @@ cc.Class({
         // 监听，给其他玩家发牌(内部事件)
         // 【核心】player_node 直接显示 17 张牌背，不再逐张动画
         this.node.on("pushcard_other_event", function() {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -150,6 +152,8 @@ cc.Class({
         }.bind(this))
 
         this.node.on("canrob_event", function(event) {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -220,12 +224,15 @@ cc.Class({
                 this._showWaitingUI(3 - this._playerdataList.length, this._currentRoomCode)
             }
 
-            if (this.playerNodeList.length >= 3) {
+            // 🔧【修复】添加空值检查
+            if (this.playerNodeList && this.playerNodeList.length >= 3) {
                 this._hideWaitingUI()
             }
         }.bind(this))
 
         myglobal.socket.onPlayerReady(function(data) {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -235,6 +242,8 @@ cc.Class({
         }.bind(this))
 
         myglobal.socket.onGameStart(function() {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -249,6 +258,8 @@ cc.Class({
         }.bind(this))
 
         myglobal.socket.onRobState(function(event) {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             // 🔧【修复】添加 round 字段，区分叫地主和抢地主
             var eventWithRound = Object.assign({}, event, { round: 2 })
             for (var i = 0; i < this.playerNodeList.length; i++) {
@@ -261,6 +272,8 @@ cc.Class({
         
         // 🔧【新增】监听叫地主结果（第一轮）
         myglobal.socket.onBidResult(function(event) {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             // 🔧【修复】添加 round 字段，区分叫地主和抢地主
             var eventWithRound = Object.assign({}, event, { round: 1 })
             for (var i = 0; i < this.playerNodeList.length; i++) {
@@ -273,6 +286,8 @@ cc.Class({
 
         myglobal.socket.onChangeMaster(function(event) {
             myglobal.playerData.master_accountid = event
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -288,6 +303,8 @@ cc.Class({
         }.bind(this))
 
         this.node.on("update_card_count_event", function(data) {
+            // 🔧【修复】添加空值检查
+            if (!this.playerNodeList) return
             for (var i = 0; i < this.playerNodeList.length; i++) {
                 var node = this.playerNodeList[i]
                 if (node) {
@@ -516,11 +533,20 @@ cc.Class({
             })
         }
         
+        // 🔧【关键修复】竞技场模式下直接隐藏 gamebeforeUI
+        // 竞技场模式下所有玩家已经准备好，游戏会自动开始，不需要显示等待界面
         var gamebefore_node = this.node.getChildByName("gamebeforeUI")
         if (gamebefore_node) {
-            gamebefore_node.active = true
-            gamebefore_node.zIndex = 1000
-            gamebefore_node.emit("init")
+            if (isArenaMode) {
+                // 竞技场模式：直接隐藏等待界面
+                gamebefore_node.active = false
+                console.log("🏟️ [_processRoomData] 竞技场模式：隐藏 gamebeforeUI")
+            } else {
+                // 普通模式：显示等待界面
+                gamebefore_node.active = true
+                gamebefore_node.zIndex = 1000
+                gamebefore_node.emit("init")
+            }
         }
         
         // 🔧【修复】竞技场模式下不显示等待玩家UI（所有玩家已分配好）
@@ -667,6 +693,9 @@ cc.Class({
      */
     _onGameStateRestored: function(data) {
         
+        // 🔧【修复】添加空值检查
+        if (!this.playerNodeList) return
+        
         // 更新玩家节点的状态
         if (data.players) {
             for (var i = 0; i < this.playerNodeList.length; i++) {
@@ -710,6 +739,9 @@ cc.Class({
      */
     _onPlayerOffline: function(data) {
         
+        // 🔧【修复】添加空值检查
+        if (!this.playerNodeList) return
+        
         // 通知所有玩家节点更新状态
         for (var i = 0; i < this.playerNodeList.length; i++) {
             var node = this.playerNodeList[i]
@@ -730,6 +762,9 @@ cc.Class({
      * 处理玩家上线通知
      */
     _onPlayerOnline: function(data) {
+        
+        // 🔧【修复】添加空值检查
+        if (!this.playerNodeList) return
         
         // 通知所有玩家节点更新状态
         for (var i = 0; i < this.playerNodeList.length; i++) {

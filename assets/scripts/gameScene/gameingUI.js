@@ -577,15 +577,50 @@ cc.Class({
      */
     renderCards: function(cards) {
         if (!cards || cards.length === 0) {
+            console.warn("🎮 [renderCards] 没有牌可渲染")
             return
+        }
+        
+        // 🔧【关键修复】确保 cards_node 存在
+        if (!this.cards_node) {
+            console.warn("🎮 [renderCards] cards_node 未定义，尝试重新查找或创建")
+            var gameSceneNode = this.node.parent
+            if (gameSceneNode) {
+                for (var i = 0; i < gameSceneNode.children.length; i++) {
+                    var child = gameSceneNode.children[i]
+                    if (child.name === "cards_node" || child.name === "cards" || child.name === "handCards") {
+                        this.cards_node = child
+                        console.log("🎮 [renderCards] 找到 cards_node:", child.name)
+                        break
+                    }
+                }
+                if (!this.cards_node) {
+                    var newCardsNode = new cc.Node("cards_node")
+                    newCardsNode.parent = gameSceneNode
+                    newCardsNode.setPosition(0, 0)
+                    newCardsNode.setAnchorPoint(0.5, 0.5)
+                    newCardsNode.setContentSize(cc.size(800, 200))
+                    this.cards_node = newCardsNode
+                    console.log("🎮 [renderCards] 创建新的 cards_node")
+                }
+            }
+            
+            // 如果仍然没有，返回
+            if (!this.cards_node) {
+                console.error("🎮 [renderCards] 无法创建 cards_node，放弃渲染")
+                return
+            }
         }
         
         // 🔥【防重复渲染】检查是否与上次相同
         var hash = JSON.stringify(cards)
         if (this._lastRenderHash === hash) {
+            console.log("🎮 [renderCards] 牌与上次相同，跳过渲染")
             return
         }
         this._lastRenderHash = hash
+        
+        console.log("🎮 [renderCards] 开始渲染 " + cards.length + " 张牌")
         
         // 【核心】使用斗地主规则排序：大王 > 小王 > 2 > A > K > Q > J > 10 > 9 > 8 > 7 > 6 > 5 > 4 > 3
         var sortedCards = this._sortCards(cards)
@@ -4739,6 +4774,12 @@ cc.Class({
      */
     _clearAllOutCardZones: function() {
         
+        // 🔧【修复】添加更完整的空值检查
+        if (!this.node) {
+            console.warn("🎮 [_clearAllOutCardZones] this.node 为空")
+            return
+        }
+        
         // 获取 gameScene 脚本
         var gameScene_script = this.node.parent ? this.node.parent.getComponent("gameScene") : null
         if (!gameScene_script) {
@@ -4755,8 +4796,14 @@ cc.Class({
         
         // 遍历所有座位，清理出牌区域
         var children = players_seat_pos.children
+        if (!children) {
+            console.warn("🎮 [_clearAllOutCardZones] players_seat_pos.children 为空")
+            return
+        }
+        
         for (var i = 0; i < children.length; i++) {
             var seatNode = children[i]
+            if (!seatNode) continue
             // 查找出牌区域节点（cardsoutzone0, cardsoutzone1, cardsoutzone2）
             for (var j = 0; j < 3; j++) {
                 var outZoneName = "cardsoutzone" + j

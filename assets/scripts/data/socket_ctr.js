@@ -50,14 +50,22 @@ window.socketCtr = function(){
         _serverUrl = window.defines.serverUrl
     }
     
-    // 确保 event 初始化
+    // 确保 event 初始化（使用全局共享的事件实例）
     var _getEvent = function() {
-        if (!event) {
-            if (typeof window.eventLister === 'undefined') {
+        // 🔧【修复】每次都检查 myglobal.eventlister，确保使用共享实例
+        if (window.myglobal && window.myglobal.eventlister) {
+            if (event !== window.myglobal.eventlister) {
+                event = window.myglobal.eventlister
+                console.log("🔧 [socket_ctr] 使用 myglobal.eventlister 共享实例")
+            }
+        } else if (!event) {
+            if (typeof window.eventLister !== 'undefined') {
+                event = window.eventLister({})
+                console.log("🔧 [socket_ctr] 创建新的事件实例（myglobal 未初始化）")
+            } else {
                 console.error("eventLister 未定义，请确保 event_lister.js 已作为插件脚本加载")
                 return null
             }
-            event = window.eventLister({})
         }
         return event
     }
@@ -153,12 +161,16 @@ window.socketCtr = function(){
         ARENA_WAITING_TICK: "arena_waiting_tick",        // 等待阶段倒计时更新
         ARENA_ASSIGN_START: "arena_assign_start",       // 分配阶段开始
         ARENA_CHAMPION_BROADCAST: "arena_champion_broadcast", // 🏆 冠军跑马灯广播
+
+        // 🔧【新增】竞技场玩家加入广播（玩家点击进入后广播给所有本期玩家）
+        ARENA_PLAYER_JOINED: "arena_player_joined",     // 玩家加入等待场景广播
     }
 
     // 发送消息
     var _sendmsg = function(type, data, callindex){
+        console.log("📤 [_sendmsg] 准备发送消息, type=" + type + ", readyState=" + (_socket ? _socket.readyState : "null"));
         if (!_socket || _socket.readyState !== WebSocket.OPEN) {
-            console.error("WebSocket 未连接")
+            console.error("❌ [_sendmsg] WebSocket 未连接，无法发送消息: " + type)
             return
         }
         var msg = {
@@ -166,7 +178,7 @@ window.socketCtr = function(){
             payload: data || {},
             callIndex: callindex || null
         }
-        // console.log("发送消息:", JSON.stringify(msg))  // 已禁用调试日志
+        console.log("📤 [_sendmsg] 发送消息: " + JSON.stringify(msg))
         _socket.send(JSON.stringify(msg))
     }
 
@@ -244,6 +256,13 @@ window.socketCtr = function(){
                 } else {
                     evt.fire("connection_success", data)
                 }
+                // 🔧【关键修复】重连成功后请求竞技场状态，确保不会错过弹窗
+                console.log("🏟️ [Reconnect] 重连成功，延迟请求竞技场状态...")
+                setTimeout(function() {
+                    if (that.requestArenaStatus) {
+                        that.requestArenaStatus()
+                    }
+                }, 500)
                 break
                 
             case MessageType.ROOM_CREATED:
@@ -286,7 +305,7 @@ window.socketCtr = function(){
                 var playerData = {
                     accountid: data.player ? data.player.id : "",
                     nick_name: data.player ? data.player.name : "",
-                    avatarUrl: "avatar_1",
+                    avatarUrl: data.player ? (data.player.avatar || "avatar_1") : "avatar_1",  // 🔧【修复】使用服务端发送的头像
                     gold_count: data.player ? data.player.gold_count : 0,  // 🔧【修复】使用服务端发送的金币数量
                     goldcount: data.player ? data.player.gold_count || 0 : 0,  // 兼容旧客户端
                     match_coin: data.player ? (data.player.match_coin || 0) : 0, // 🔧【新增】竞技币
@@ -533,11 +552,13 @@ window.socketCtr = function(){
 
             // 竞技场大厅状态推送（期号、倒计时）
             case MessageType.ARENA_STATUS:
+                console.log("🏟️ [Arena] 收到 arena_status 消息, arenas 数量:", data.arenas ? data.arenas.length : 0)
                 evt.fire("arena_status_notify", data)
                 break
 
             // 🔧【新增】竞技场比赛开始通知
             case MessageType.ARENA_MATCH_START:
+                console.log("🏆 [Arena] 收到 arena_match_start 消息:", JSON.stringify(data))
                 evt.fire("arena_match_start_notify", {
                     period_no: data.period_no || "",
                     room_id: data.room_id || 0,
@@ -699,26 +720,41 @@ window.socketCtr = function(){
 
             // 等待阶段状态推送
             case MessageType.ARENA_WAITING_STATUS:
-                evt.fire("arena_waiting_status_notify", {
+                // 🔧【关键修复】countdown 可能是 0，不能使用 || 运算符
+                var countdownValue = (data.countdown !== undefined && data.countdown !== null) ? data.countdown : 60;
+                console.log("🏟️ [Arena] 收到等待状态推送，服务端倒计时=" + data.countdown + "，使用值=" + countdownValue);
+                
+                var waitingStatusData = {
                     period_no: data.period_no || "",
                     room_id: data.room_id || 0,
                     room_name: data.room_name || "",
                     phase: data.phase || "waiting",
-                    countdown: data.countdown || 60,
+                    countdown: countdownValue,  // 🔧【关键修复】使用正确的值
                     start_time: data.start_time || 0,
                     total_players: data.total_players || 0,
                     entered_players: data.entered_players || 0,
                     players: data.players || [],
                     message: data.message || ""
-                })
+                }
+                
+                // 🔧【修复】缓存数据到全局变量，确保场景切换后数据不丢失
+                if (window.myglobal) {
+                    window.myglobal.arenaWaitingStatusCache = waitingStatusData
+                    console.log("🏟️ [Arena] 缓存等待状态数据，玩家数量:", data.players ? data.players.length : 0)
+                }
+                
+                evt.fire("arena_waiting_status_notify", waitingStatusData)
                 break
 
             // 等待阶段倒计时更新
             case MessageType.ARENA_WAITING_TICK:
+                // 🔧【关键修复】countdown 可能是 0，不能使用 || 运算符
+                var tickCountdown = (data.countdown !== undefined && data.countdown !== null) ? data.countdown : 0;
+                console.log("🏟️ [Arena] 收到倒计时更新，服务端倒计时=" + tickCountdown);
                 evt.fire("arena_waiting_tick_notify", {
                     period_no: data.period_no || "",
                     room_id: data.room_id || 0,
-                    countdown: data.countdown || 0,
+                    countdown: tickCountdown,
                     entered_players: data.entered_players || 0
                 })
                 break
@@ -752,6 +788,44 @@ window.socketCtr = function(){
                     message: data.message || "",
                     timestamp: data.timestamp || 0
                 })
+                break
+
+            // 🔧【新增】玩家加入等待场景广播
+            case MessageType.ARENA_PLAYER_JOINED:
+                console.log("🏟️ [Arena] 收到玩家加入广播:", JSON.stringify(data));
+                var playerJoinedData = {
+                    period_no: data.period_no || "",
+                    room_id: data.room_id || 0,
+                    player: data.player || {},
+                    entered_players: data.entered_players || 0,
+                    total_players: data.total_players || 0,
+                    players: data.players || [],
+                    message: data.message || ""
+                };
+                
+                // 🔧【修复】同样缓存到 arenaWaitingStatusCache，确保场景创建时能获取最新数据
+                if (window.myglobal) {
+                    // 合并更新：更新 players 列表和计数
+                    if (window.myglobal.arenaWaitingStatusCache) {
+                        window.myglobal.arenaWaitingStatusCache.players = playerJoinedData.players;
+                        window.myglobal.arenaWaitingStatusCache.entered_players = playerJoinedData.entered_players;
+                        window.myglobal.arenaWaitingStatusCache.total_players = playerJoinedData.total_players;
+                        console.log("🏟️ [Arena] 更新缓存数据，玩家数量:", playerJoinedData.players.length);
+                    } else {
+                        // 如果缓存不存在，创建一个新的缓存
+                        window.myglobal.arenaWaitingStatusCache = {
+                            period_no: playerJoinedData.period_no,
+                            room_id: playerJoinedData.room_id,
+                            players: playerJoinedData.players,
+                            entered_players: playerJoinedData.entered_players,
+                            total_players: playerJoinedData.total_players,
+                            message: playerJoinedData.message
+                        };
+                        console.log("🏟️ [Arena] 创建缓存数据，玩家数量:", playerJoinedData.players.length);
+                    }
+                }
+                
+                evt.fire("arena_player_joined_notify", playerJoinedData)
                 break
             
             default:
@@ -934,11 +1008,11 @@ window.socketCtr = function(){
             // 转换数据格式
             var players = data.players || []
             var playerdata = players.map(function(p, idx) {
-                console.log("🪙 [request_enter_room] 转换玩家数据:", p.name, "gold_count=", p.gold_count, "match_coin=", p.match_coin, "arena_gold=", p.arena_gold)
+                console.log("🪙 [request_enter_room] 转换玩家数据:", p.name, "gold_count=", p.gold_count, "match_coin=", p.match_coin, "arena_gold=", p.arena_gold, "avatar=", p.avatar)
                 return {
                     accountid: p.id,
                     nick_name: p.name,
-                    avatarUrl: "avatar_1",
+                    avatarUrl: p.avatar || "avatar_1",  // 🔧【修复】使用服务端发送的头像
                     gold_count: p.gold_count || 0,
                     goldcount: p.gold_count || 0,
                     match_coin: p.match_coin || 0, // 🔧【新增】竞技币

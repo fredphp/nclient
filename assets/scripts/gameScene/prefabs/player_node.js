@@ -366,6 +366,17 @@ cc.Class({
             return
         }
 
+        // 🔧【优化】优先使用预加载的缓存头像
+        var myglobal = window.myglobal
+        if (myglobal && myglobal._avatarCache && myglobal._avatarCache[avatarUrl]) {
+            var cachedSpriteFrame = myglobal._avatarCache[avatarUrl]
+            if (cachedSpriteFrame) {
+                console.log("🖼️ [player_node] 使用缓存头像:", avatarUrl)
+                self._setAvatarSprite(cachedSpriteFrame)
+                return
+            }
+        }
+
         // 判断是否是远程URL
         if (avatarUrl.indexOf('http://') === 0 || avatarUrl.indexOf('https://') === 0) {
             // 远程URL头像
