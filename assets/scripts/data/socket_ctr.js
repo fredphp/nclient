@@ -858,6 +858,22 @@ window.socketCtr = function(){
             return
         }
         
+        // 🔧【关键修复】检查是否有Token，如果没有则延迟连接
+        var myglobal = window.myglobal
+        var hasToken = myglobal && myglobal.playerData && myglobal.playerData.token
+        
+        // 如果已连接但没有Token，现在有Token了，需要重新连接
+        if (_isConnected && !hasToken) {
+            console.log("🔧 [initSocket] 已连接但没有Token，保持现有连接")
+            return
+        }
+        
+        // 如果已连接且有Token，不需要重新连接
+        if (_isConnected && hasToken) {
+            console.log("🔧 [initSocket] 已连接且有Token，跳过重新连接")
+            return
+        }
+        
         _setConnectionState("connecting")
         
         var wsUrl = _serverUrl
@@ -865,10 +881,12 @@ window.socketCtr = function(){
             wsUrl = "ws://" + wsUrl + "/ws"
         }
         
-        var myglobal = window.myglobal
-        if (myglobal && myglobal.playerData && myglobal.playerData.token) {
+        if (hasToken) {
             var separator = wsUrl.indexOf("?") > 0 ? "&" : "?"
             wsUrl = wsUrl + separator + "token=" + encodeURIComponent(myglobal.playerData.token)
+            console.log("🔧 [initSocket] 连接时带上Token: " + myglobal.playerData.token.substring(0, 10) + "...")
+        } else {
+            console.log("⚠️ [initSocket] 没有Token，将建立未认证连接")
         }
         
         
@@ -1548,6 +1566,45 @@ window.socketCtr = function(){
     // 检查 WebSocket 物理连接是否打开（readyState === OPEN）
     that.isWebSocketOpen = function(){
         return _socket && _socket.readyState === WebSocket.OPEN
+    }
+    
+    // 🔧【新增】登录成功后重新建立带Token的WebSocket连接
+    // 用于解决：WebSocket在登录前建立，没有Token导致PlayerID为0的问题
+    that.reconnectWithToken = function(){
+        var myglobal = window.myglobal
+        var hasToken = myglobal && myglobal.playerData && myglobal.playerData.token
+        
+        if (!hasToken) {
+            console.log("⚠️ [reconnectWithToken] 没有Token，无法重新连接")
+            return
+        }
+        
+        // 如果当前连接的PlayerID已经是正确的，不需要重新连接
+        if (_playerId && _playerId > 0) {
+            console.log("🔧 [reconnectWithToken] 当前连接已有PlayerID:", _playerId, "跳过重新连接")
+            return
+        }
+        
+        console.log("🔄 [reconnectWithToken] 关闭旧连接，重新建立带Token的连接...")
+        
+        // 关闭旧连接
+        if (_socket) {
+            _stopHeartbeat()
+            _socket.close()
+            _socket = null
+            _isConnected = false
+            _setConnectionState("disconnected")
+        }
+        
+        // 延迟后重新连接
+        setTimeout(function(){
+            that.initSocket()
+        }, 100)
+    }
+    
+    // 🔧【新增】获取当前PlayerID
+    that.getPlayerId = function(){
+        return _playerId
     }
 
     // ========== 心跳机制 ==========

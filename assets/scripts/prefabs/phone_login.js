@@ -491,6 +491,13 @@ cc.Class({
                     // 保存到本地存储
                     window.myglobal.playerData.saveToLocal();
                     console.log("【手机登录】用户数据已保存, nickName =", window.myglobal.playerData.nickName);
+                    
+                    // 🔧【关键修复】登录成功后重新建立带Token的WebSocket连接
+                    // 解决WebSocket在登录前建立导致PlayerID为0的问题
+                    if (window.myglobal.socket && window.myglobal.socket.reconnectWithToken) {
+                        console.log("🔄 【手机登录】重新建立带Token的WebSocket连接...");
+                        window.myglobal.socket.reconnectWithToken();
+                    }
                 }
 
                 // 跳转到大厅场景
