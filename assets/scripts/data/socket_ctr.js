@@ -19,6 +19,9 @@ window.socketCtr = function(){
     var _socket = null
     var event = null  // 延迟初始化
     var _isConnected = false
+    var _connectionHasToken = false  // 🔧【新增】跟踪当前连接是否带Token
+    var _isReconnecting = false      // 🔧【新增】重连锁，防止重复重连
+    var _reconnectPending = false    // 🔧【新增】是否有待处理的重连请求
     var _playerId = ""
     var _playerName = ""
     var _reconnectToken = ""
@@ -164,6 +167,17 @@ window.socketCtr = function(){
 
         // 🔧【新增】竞技场玩家加入广播（玩家点击进入后广播给所有本期玩家）
         ARENA_PLAYER_JOINED: "arena_player_joined",     // 玩家加入等待场景广播
+
+        // 🔧【新增】竞技场淘汰踢出通知
+        ARENA_ELIMINATED_KICK: "arena_eliminated_kick", // 被淘汰踢出房间通知
+
+        // 🔧【新增】竞技场报名相关消息类型
+        ARENA_SIGNUP: "arena_signup",                   // 竞技场报名请求
+        ARENA_CANCEL_SIGNUP: "arena_cancel_signup",     // 取消报名请求
+        ARENA_SIGNUP_SUCCESS: "arena_signup_success",   // 报名成功响应
+        ARENA_SIGNUP_FAILED: "arena_signup_failed",     // 报名失败响应
+        ARENA_CANCEL_SUCCESS: "arena_cancel_success",   // 取消报名成功响应
+        ARENA_CANCEL_FAILED: "arena_cancel_failed",     // 取消报名失败响应
     }
 
     // 发送消息
@@ -827,6 +841,67 @@ window.socketCtr = function(){
                 
                 evt.fire("arena_player_joined_notify", playerJoinedData)
                 break
+
+            // ============================================================
+            // 【新增】竞技场淘汰踢出房间通知
+            // ============================================================
+            case MessageType.ARENA_ELIMINATED_KICK:
+                console.log("🚪 [Arena] 收到淘汰踢出通知:", JSON.stringify(data));
+                // 🔧【关键】清除房间状态
+                _currentRoomCode = ""
+                _isInRoom = false
+                // 触发事件，让 UI 显示被淘汰提示
+                evt.fire("arena_eliminated_kick_notify", {
+                    period_no: data.period_no || "",
+                    player_id: data.player_id || "",
+                    message: data.message || "您已被淘汰，即将离开房间"
+                })
+                break
+
+            // ============================================================
+            // 【新增】竞技场报名响应处理
+            // ============================================================
+
+            // 报名成功响应
+            case MessageType.ARENA_SIGNUP_SUCCESS:
+                console.log("🏟️ [Arena] 报名成功:", JSON.stringify(data));
+                evt.fire("arena_signup_success_notify", {
+                    period_no: data.period_no || "",
+                    room_id: data.room_id || 0,
+                    signup_fee: data.signup_fee || 0,
+                    balance_after: data.balance_after || 0,
+                    signup_time: data.signup_time || Date.now()
+                })
+                break
+
+            // 报名失败响应
+            case MessageType.ARENA_SIGNUP_FAILED:
+                console.log("🏟️ [Arena] 报名失败:", JSON.stringify(data));
+                evt.fire("arena_signup_failed_notify", {
+                    code: data.code || 0,
+                    message: data.message || "报名失败"
+                })
+                break
+
+            // 取消报名成功响应
+            case MessageType.ARENA_CANCEL_SUCCESS:
+                console.log("🏟️ [Arena] 取消报名成功:", JSON.stringify(data));
+                evt.fire("arena_cancel_success_notify", {
+                    period_no: data.period_no || "",
+                    room_id: data.room_id || 0,
+                    refund_amount: data.refund_amount || 0,
+                    balance_after: data.balance_after || 0
+                })
+                break
+
+            // 取消报名失败响应
+            case MessageType.ARENA_CANCEL_FAILED:
+                console.log("🏟️ [Arena] 取消报名失败:", JSON.stringify(data));
+                evt.fire("arena_cancel_failed_notify", {
+                    code: data.code || 0,
+                    message: data.message || "取消报名失败"
+                })
+                break
             
             default:
                 evt.fire(type, data)
@@ -858,21 +933,64 @@ window.socketCtr = function(){
             return
         }
         
-        // 🔧【关键修复】检查是否有Token，如果没有则延迟连接
+        // 🔧【关键修复】检查是否有Token
         var myglobal = window.myglobal
         var hasToken = myglobal && myglobal.playerData && myglobal.playerData.token
         
-        // 如果已连接但没有Token，现在有Token了，需要重新连接
-        if (_isConnected && !hasToken) {
-            console.log("🔧 [initSocket] 已连接但没有Token，保持现有连接")
+        // 🔧【新增】重连锁检查 - 防止重复重连
+        if (_isReconnecting) {
+            console.log("🔧 [initSocket] 正在重连中，跳过本次请求（设置pending标记）")
+            _reconnectPending = true
             return
         }
         
-        // 如果已连接且有Token，不需要重新连接
-        if (_isConnected && hasToken) {
-            console.log("🔧 [initSocket] 已连接且有Token，跳过重新连接")
-            return
+        // 🔧【修复】正确判断是否需要重新连接
+        // 情况1: 已连接且当前连接有Token -> 跳过
+        // 情况2: 已连接但没有Token，现在有Token了 -> 需要重连
+        // 情况3: 已连接但没有Token，现在也没有 -> 跳过
+        if (_isConnected) {
+            if (_connectionHasToken) {
+                console.log("🔧 [initSocket] 已连接且当前连接带Token，跳过重新连接")
+                return
+            }
+            // 当前连接没有Token
+            if (hasToken) {
+                console.log("🔧 [initSocket] 当前连接无Token，但现在有Token了，需要重新连接")
+                // 不return，继续执行建立新连接
+            } else {
+                console.log("🔧 [initSocket] 已连接且无Token，保持现有连接")
+                return
+            }
         }
+        
+        // 设置重连锁
+        _isReconnecting = true
+        
+        // 如果要建立新连接，先关闭旧连接
+        if (_socket && (_socket.readyState === WebSocket.OPEN || _socket.readyState === WebSocket.CONNECTING)) {
+            console.log("🔧 [initSocket] 关闭旧连接...")
+            _stopHeartbeat()
+            
+            // 🔧【关键修复】等待 onclose 回调后再创建新连接
+            var oldSocket = _socket
+            oldSocket.onclose = function(event) {
+                console.log("🔧 [initSocket] 旧连接已关闭，开始建立新连接")
+                _socket = null
+                _isConnected = false
+                _connectionHasToken = false
+                _createNewWebSocket(hasToken, evt)
+            }
+            oldSocket.close()
+            return  // 等待 onclose 回调
+        }
+        
+        // 没有旧连接，直接创建新连接
+        _createNewWebSocket(hasToken, evt)
+    }
+    
+    // 🔧【新增】创建新的 WebSocket 连接（从 initSocket 提取出来）
+    var _createNewWebSocket = function(hasToken, evt) {
+        var myglobal = window.myglobal
         
         _setConnectionState("connecting")
         
@@ -895,7 +1013,11 @@ window.socketCtr = function(){
             
             _socket.onopen = function(){
                 _isConnected = true
+                _connectionHasToken = hasToken  // 🔧【新增】记录当前连接是否带Token
+                _isReconnecting = false         // 🔧【新增】重置重连锁
+                _reconnectPending = false       // 🔧【新增】重置pending标记
                 _setConnectionState("connected")
+                console.log("🔧 [initSocket] WebSocket 已连接, _connectionHasToken =", _connectionHasToken)
                 // 使用 setTimeout 确保 WebSocket 完全准备好后再发送
                 setTimeout(function(){
                     if (_socket && _socket.readyState === WebSocket.OPEN) {
@@ -933,18 +1055,38 @@ window.socketCtr = function(){
             
             _socket.onerror = function(error){
                 console.error("WebSocket 错误:", error)
+                _isReconnecting = false  // 🔧【新增】重置重连锁
                 _setConnectionState("disconnected")
                 evt.fire("connection_error", error)
+                
+                // 🔧【新增】如果有pending请求，尝试重新连接
+                if (_reconnectPending) {
+                    _reconnectPending = false
+                    setTimeout(function() {
+                        that.initSocket()
+                    }, 100)
+                }
             }
             
             _socket.onclose = function(event){
                 _isConnected = false
+                _connectionHasToken = false  // 🔧【新增】连接关闭时重置
+                _isReconnecting = false      // 🔧【新增】重置重连锁
                 _setConnectionState("disconnected")
                 _stopHeartbeat()
                 evt.fire("connection_closed", event)
+                
+                // 🔧【新增】如果有pending请求，尝试重新连接
+                if (_reconnectPending) {
+                    _reconnectPending = false
+                    setTimeout(function() {
+                        that.initSocket()
+                    }, 100)
+                }
             }
         } catch(e) {
             console.error("创建 WebSocket 失败:", e)
+            _isReconnecting = false  // 🔧【新增】重置重连锁
             _setConnectionState("disconnected")
         }
     }
@@ -1297,6 +1439,13 @@ window.socketCtr = function(){
         if (evt) evt.on("trustee_state_notify", callback)
     }
 
+    // 🔧【新增】发送取消托管请求
+    // 用户活动时调用，让服务端停止机器人自动操作，让玩家恢复控制
+    that.cancelTrustee = function(){
+        console.log("📤 [cancelTrustee] 发送取消托管请求")
+        _sendmsg("cancel_trustee", {})
+    }
+
     // ============================================================
     // 【竞技场】事件监听
     // ============================================================
@@ -1383,14 +1532,100 @@ window.socketCtr = function(){
     }
 
     // ============================================================
+    // 【竞技场】报名相关事件监听
+    // ============================================================
+
+    /**
+     * 🔧【新增】监听报名成功通知
+     * @param {Function} callback - 回调函数，接收 { period_no, room_id, signup_fee, balance_after, signup_time }
+     */
+    that.onArenaSignupSuccess = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.on("arena_signup_success_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】移除报名成功监听
+     * @param {Function} callback - 要移除的回调函数
+     */
+    that.offArenaSignupSuccess = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.off("arena_signup_success_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】监听报名失败通知
+     * @param {Function} callback - 回调函数，接收 { code, message }
+     */
+    that.onArenaSignupFailed = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.on("arena_signup_failed_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】移除报名失败监听
+     * @param {Function} callback - 要移除的回调函数
+     */
+    that.offArenaSignupFailed = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.off("arena_signup_failed_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】监听取消报名成功通知
+     * @param {Function} callback - 回调函数，接收 { period_no, room_id, refund_amount, balance_after }
+     */
+    that.onArenaCancelSuccess = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.on("arena_cancel_success_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】移除取消报名成功监听
+     * @param {Function} callback - 要移除的回调函数
+     */
+    that.offArenaCancelSuccess = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.off("arena_cancel_success_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】监听取消报名失败通知
+     * @param {Function} callback - 回调函数，接收 { code, message }
+     */
+    that.onArenaCancelFailed = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.on("arena_cancel_failed_notify", callback)
+    }
+
+    /**
+     * 🔧【新增】移除取消报名失败监听
+     * @param {Function} callback - 要移除的回调函数
+     */
+    that.offArenaCancelFailed = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.off("arena_cancel_failed_notify", callback)
+    }
+
+    // ============================================================
     // 【竞技场】发送请求方法
     // ============================================================
+
+    /**
+     * 🔧【新增】发送竞技场报名请求
+     * @param {Object} data - 请求数据 { room_id: number }
+     */
+    that.sendArenaSignup = function(data){
+        console.log("🏟️ [Arena] 发送 arena_signup 请求:", JSON.stringify(data));
+        _sendmsg("arena_signup", data, null)
+    }
 
     /**
      * 🔧【新增】发送竞技场取消报名请求
      * @param {Object} data - 请求数据 { room_id: number }
      */
     that.sendArenaCancelSignup = function(data){
+        console.log("🏟️ [Arena] 发送 arena_cancel_signup 请求:", JSON.stringify(data));
         _sendmsg("arena_cancel_signup", data, null)
     }
 
@@ -1566,6 +1801,17 @@ window.socketCtr = function(){
     // 检查 WebSocket 物理连接是否打开（readyState === OPEN）
     that.isWebSocketOpen = function(){
         return _socket && _socket.readyState === WebSocket.OPEN
+    }
+    
+    // 🔧【新增】检查当前连接是否已认证（带Token且有有效PlayerID）
+    that.isAuthenticated = function(){
+        // 必须同时满足：连接已建立、连接带Token、有有效的PlayerID
+        return _isConnected && _connectionHasToken && _playerId && _playerId > 0
+    }
+    
+    // 🔧【新增】获取当前连接是否带Token
+    that.hasConnectionToken = function(){
+        return _connectionHasToken
     }
     
     // 🔧【新增】登录成功后重新建立带Token的WebSocket连接
@@ -1779,6 +2025,20 @@ window.socketCtr = function(){
     that.onTournamentFinalRank = function(callback){
         var evt = _getEvent()
         if (evt) evt.on("tournament_final_rank_notify", callback)
+    }
+
+    // ============================================================
+    // 【新增】竞技场淘汰踢出房间通知监听
+    // ============================================================
+
+    /**
+     * 🔧【新增】监听竞技场淘汰踢出房间通知
+     * 当玩家被淘汰时，服务端发送此消息通知客户端离开房间
+     * @param {Function} callback - 回调函数，接收 { period_no, player_id, message }
+     */
+    that.onArenaEliminatedKick = function(callback){
+        var evt = _getEvent()
+        if (evt) evt.on("arena_eliminated_kick_notify", callback)
     }
 
     // ============================================================

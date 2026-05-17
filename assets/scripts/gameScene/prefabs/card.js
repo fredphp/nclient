@@ -16,9 +16,6 @@
 
 var RoomState = window.RoomState || {}
 
-// 🔧【新增】缓存已加载的精灵图集
-var _cachedAtlas = null
-
 cc.Class({
     extends: cc.Component,
 
@@ -29,11 +26,7 @@ cc.Class({
     onLoad () {
         this.flag = false
         this.offset_y = 20
-        
-        // 🔧【关键修复】如果 cards_sprite_atlas 为空，尝试从缓存或动态加载
-        if (!this.cards_sprite_atlas) {
-            this._loadCardAtlas()
-        }
+        this._touchEventAdded = false  // 🔧【修复】标记是否已添加触摸监听器，防止重复添加
 
         this.node.on("reset_card_flag", function(event){
             if(this.flag == true){
@@ -41,39 +34,6 @@ cc.Class({
                 this.node.y -= this.offset_y
             }
         }.bind(this))
-    },
-    
-    /**
-     * 🔧【新增】动态加载卡牌精灵图集
-     */
-    _loadCardAtlas: function() {
-        var self = this
-        
-        // 优先使用全局缓存
-        if (window._cardAtlas && window._cardAtlasLoaded) {
-            this.cards_sprite_atlas = window._cardAtlas
-            _cachedAtlas = window._cardAtlas
-            return
-        }
-        
-        // 使用本地缓存
-        if (_cachedAtlas) {
-            this.cards_sprite_atlas = _cachedAtlas
-            return
-        }
-        
-        // 🔧【修复】正确的精灵图集路径：resources/UI/card/card
-        cc.resources.load("UI/card/card", cc.SpriteAtlas, function(err, atlas) {
-            if (err) {
-                console.error("🃏 [_loadCardAtlas] 加载卡牌图集失败:", err)
-                return
-            }
-            _cachedAtlas = atlas
-            window._cardAtlas = atlas
-            window._cardAtlasLoaded = true
-            self.cards_sprite_atlas = atlas
-            console.log("🃏 [_loadCardAtlas] 卡牌图集加载成功")
-        })
     },
 
     start () {},
@@ -84,7 +44,15 @@ cc.Class({
         var myglobal = window.myglobal
         if (!myglobal || !myglobal.playerData) return
 
+        // 🔧【修复】防止重复添加触摸监听器
+        // 每次调用 showCards 时都会调用此函数，但只应添加一次监听器
+        if (this._touchEventAdded) {
+            return
+        }
+
         if (this.accountid == myglobal.playerData.accountID) {
+            this._touchEventAdded = true  // 标记已添加
+
             this.node.on(cc.Node.EventType.TOUCH_START, function(event){
                 // 🔧【修复】向上查找 gameScene 节点
                 var gameScene_node = this._findGameSceneNode()
@@ -166,56 +134,67 @@ cc.Class({
         var suitName = this._getSuitName(card.suit)
         var rankName = this._getRankName(card.rank)
 
-        // 🔧【关键修复】检查 cards_sprite_atlas 是否可用
-        if (!this.cards_sprite_atlas) {
-            // 优先使用全局缓存
-            if (window._cardAtlas && window._cardAtlasLoaded) {
-                this.cards_sprite_atlas = window._cardAtlas
-                _cachedAtlas = window._cardAtlas
-            } else if (_cachedAtlas) {
-                this.cards_sprite_atlas = _cachedAtlas
+        // 🔧【修复】获取卡牌图集
+        var atlas = this.cards_sprite_atlas || window._cardAtlas
+        
+        // 🔧【关键修复】如果图集未加载，尝试同步加载（阻塞式）
+        if (!atlas) {
+            console.warn("🃏 [showCards] 图集未预加载，尝试同步加载...")
+            // 同步加载图集（使用 cc.loader.get 或直接加载）
+            var loadedAtlas = this._loadAtlasSync()
+            if (loadedAtlas) {
+                atlas = loadedAtlas
+                window._cardAtlas = atlas
+                window._cardAtlasLoaded = true
             } else {
-                console.error("🃏 [showCards] 卡牌精灵图集未加载，无法显示卡牌")
-                // 尝试异步加载，稍后重试
-                var self = this
-                this._loadCardAtlas()
-                // 延迟重试
-                this.scheduleOnce(function() {
-                    if (self.cards_sprite_atlas) {
-                        self._doShowCard(spriteKey)
-                    }
-                }, 0.1)
+                console.error("🃏 [showCards] 无法加载卡牌图集！")
+                // 设置一个默认的红色方块背景，防止完全看不到牌
                 return
             }
         }
-        
-        this._doShowCard(spriteKey)
-    },
-    
-    /**
-     * 🔧【新增】实际显示卡牌
-     */
-    _doShowCard: function(spriteKey) {
-        // 🔧【修复】尝试带 .png 和不带 .png 两种格式
-        var spriteFrame = this.cards_sprite_atlas.getSpriteFrame(spriteKey)
-        if (!spriteFrame) {
-            // 尝试带 .png 扩展名
-            spriteFrame = this.cards_sprite_atlas.getSpriteFrame(spriteKey + ".png")
-        }
-        
+
+        var spriteFrame = atlas.getSpriteFrame(spriteKey)
         if (spriteFrame) {
             this.node.getComponent(cc.Sprite).spriteFrame = spriteFrame
             this.setTouchEvent()
         } else {
             console.error("🃏 [showCards] 找不到精灵帧:", spriteKey)
-            // 打印所有可用的精灵帧名称，帮助调试
-            if (this.cards_sprite_atlas && this.cards_sprite_atlas.getSpriteFrames) {
-                var frames = this.cards_sprite_atlas.getSpriteFrames()
-                if (frames && frames.length > 0) {
-                    console.log("🃏 可用的精灵帧:", frames.slice(0, 10).map(function(f) { return f.name }))
-                }
-            }
         }
+    },
+    
+    /**
+     * 🔧【新增】同步加载卡牌图集
+     * 在预加载失败时作为兜底方案
+     */
+    _loadAtlasSync: function() {
+        // 检查是否已经在加载队列中
+        if (window._cardAtlasLoading) {
+            return null
+        }
+        
+        // 尝试从资源缓存中获取
+        var cache = cc.loader.getRes("UI/card/card", cc.SpriteAtlas)
+        if (cache) {
+            console.log("🃏 [_loadAtlasSync] 从缓存获取图集成功")
+            return cache
+        }
+        
+        // 标记正在加载
+        window._cardAtlasLoading = true
+        
+        // 异步加载（这次调用会失败，但下次就能从缓存获取）
+        cc.resources.load("UI/card/card", cc.SpriteAtlas, function(err, atlas) {
+            window._cardAtlasLoading = false
+            if (err) {
+                console.error("🃏 [_loadAtlasSync] 加载失败:", err)
+                return
+            }
+            window._cardAtlas = atlas
+            window._cardAtlasLoaded = true
+            console.log("🃏 [_loadAtlasSync] 后台加载成功")
+        })
+        
+        return null
     },
 
     _getSuitName: function(suit) {

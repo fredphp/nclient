@@ -4,7 +4,7 @@
  * 功能：
  * 1. 显示期号和比赛结束标题
  * 2. 前三名领奖台展示（冠军最大，居中高亮）
- * 3. TOP20 ScrollView列表
+ * 3. TOP10 列表展示（第4-10名）
  * 4. 显示排名、头像、昵称、最终金币
  * 5. 确认按钮返回大厅
  * 
@@ -12,6 +12,7 @@
  * 冠军特效：发光、粒子、奖杯动画
  * 
  * 🔧【修复】优化布局：修复名次、头像、用户名挤在一起的问题
+ * 🔧【新增】添加TOP10列表展示功能
  */
 
 cc.Class({
@@ -86,6 +87,7 @@ cc.Class({
         // 初始化数据
         this._data = null
         this._top3 = []
+        this._top10 = []  // 🔧【修改】改为top10
         this._top20 = []
         this._myRank = 0
         this._myMatchCoin = 0
@@ -143,18 +145,18 @@ cc.Class({
 
         // 主弹窗容器 - 增大尺寸以容纳所有元素
         var dialogNode = new cc.Node("DialogContainer")
-        dialogNode.setContentSize(1000, 650)
+        dialogNode.setContentSize(1000, 720)  // 🔧【增大高度】从650改为720
         dialogNode.setPosition(0, 0)
         
         // 弹窗背景
         var dialogBg = new cc.Node("DialogBg")
         var dialogBgGraphics = dialogBg.addComponent(cc.Graphics)
         dialogBgGraphics.fillColor = new cc.Color(25, 35, 60, 250)
-        dialogBgGraphics.roundRect(-500, -325, 1000, 650, 25)
+        dialogBgGraphics.roundRect(-500, -360, 1000, 720, 25)  // 🔧【调整圆角矩形参数】
         dialogBgGraphics.fill()
         dialogBgGraphics.strokeColor = new cc.Color(180, 140, 60)
         dialogBgGraphics.lineWidth = 4
-        dialogBgGraphics.roundRect(-500, -325, 1000, 650, 25)
+        dialogBgGraphics.roundRect(-500, -360, 1000, 720, 25)  // 🔧【调整圆角矩形参数】
         dialogBgGraphics.stroke()
         dialogBg.parent = dialogNode
         dialogNode.parent = this.node
@@ -203,6 +205,9 @@ cc.Class({
         // ========== 我的排名区域 ==========
         // 🔧【修复】排名文本框文字上下居中
         this._createMyRankArea(dialogNode)
+
+        // ========== TOP10 列表区域 ==========
+        this._createTop10ListArea(dialogNode)
 
         // ========== 确认按钮 ==========
         this._createConfirmButton(dialogNode)
@@ -293,12 +298,20 @@ cc.Class({
         avatarBgGraphics.stroke()
         avatarBg.parent = avatarContainer
 
-        // 头像精灵
+        // 🔧【修复】添加圆形遮罩节点，实现头像圆形裁剪
+        var avatarMaskNode = new cc.Node("AvatarMask")
+        avatarMaskNode.setContentSize(avatarSize - 4, avatarSize - 4)
+        var avatarMask = avatarMaskNode.addComponent(cc.Mask)
+        avatarMask.type = cc.Mask.Type.ELLIPSE  // 椭圆形遮罩（圆形）
+        avatarMask.segements = 64  // 圆滑度
+        avatarMaskNode.parent = avatarContainer
+
+        // 头像精灵 - 放在遮罩节点下
         var avatarSpriteNode = new cc.Node("AvatarSprite")
         var avatarSprite = avatarSpriteNode.addComponent(cc.Sprite)
         avatarSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM
         avatarSpriteNode.setContentSize(avatarSize - 4, avatarSize - 4)
-        avatarSpriteNode.parent = avatarContainer
+        avatarSpriteNode.parent = avatarMaskNode  // 🔧【修复】放在遮罩节点下
 
         avatarContainer.parent = node
 
@@ -385,12 +398,273 @@ cc.Class({
     },
 
     /**
+     * 🔧【新增】创建TOP10列表区域
+     * 显示第4-10名的玩家列表
+     */
+    _createTop10ListArea: function(parentNode) {
+        var container = new cc.Node("Top10ListContainer")
+        container.setPosition(0, -100)  // 在领奖台下方
+        container.setContentSize(900, 180)  // 列表区域大小
+
+        // 列表标题
+        var titleNode = new cc.Node("ListTitle")
+        titleNode.setPosition(0, 75)
+        var titleLabel = titleNode.addComponent(cc.Label)
+        titleLabel.string = "━━━ 排行榜 TOP 10 ━━━"
+        titleLabel.fontSize = 20
+        titleLabel.lineHeight = 24
+        titleLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER
+        titleNode.color = new cc.Color(255, 215, 0)
+        var titleOutline = titleNode.addComponent(cc.LabelOutline)
+        titleOutline.color = new cc.Color(100, 60, 0)
+        titleOutline.width = 2
+        titleNode.parent = container
+
+        // 列表容器（用于存放列表项）
+        this._top10ListNode = new cc.Node("Top10ListContent")
+        this._top10ListNode.setPosition(0, 55)
+        this._top10ListNode.parent = container
+
+        // 暂存容器节点引用
+        this._top10ListContainer = container
+        container.parent = parentNode
+        
+        console.log("🏆 [TournamentFinalRankDialog] TOP10列表区域创建完成")
+    },
+
+    /**
+     * 🔧【新增】更新TOP10列表
+     * @param {Array} top10 - 前10名玩家数据
+     */
+    _updateTop10List: function(top10) {
+        if (!this._top10ListNode) {
+            console.warn("🏆 [TournamentFinalRankDialog] TOP10列表节点不存在")
+            return
+        }
+
+        // 清空现有列表项
+        this._top10ListNode.removeAllChildren()
+
+        // 只显示第4-10名（前三名已在领奖台显示）
+        var displayList = top10.slice(3, 10)
+        
+        if (displayList.length === 0) {
+            console.log("🏆 [TournamentFinalRankDialog] 没有第4-10名数据")
+            return
+        }
+
+        console.log("🏆 [TournamentFinalRankDialog] 更新TOP10列表，共" + displayList.length + "条数据")
+
+        // 创建列表项
+        for (var i = 0; i < displayList.length; i++) {
+            var playerData = displayList[i]
+            var rank = playerData.rank || (i + 4)
+            
+            var itemNode = this._createTop10ListItem(playerData, rank, i)
+            itemNode.parent = this._top10ListNode
+        }
+    },
+
+    /**
+     * 🔧【新增】创建TOP10列表项
+     * @param {Object} data - 玩家数据
+     * @param {number} rank - 排名
+     * @param {number} index - 索引（用于位置计算）
+     */
+    _createTop10ListItem: function(data, rank, index) {
+        var itemNode = new cc.Node("Top10Item_" + rank)
+        
+        // 两列布局：左列4-6名，右列7-10名
+        var col = index < 3 ? 0 : 1
+        var row = index < 3 ? index : (index - 3)
+        var itemWidth = 430
+        var itemHeight = 42
+        var spacingX = 10
+        var spacingY = 5
+        
+        // 计算位置
+        var x = col * (itemWidth + spacingX) - (itemWidth + spacingX) / 2
+        var y = -row * (itemHeight + spacingY) + 30
+        
+        itemNode.setPosition(x, y)
+        itemNode.setContentSize(itemWidth, itemHeight)
+
+        // 列表项背景
+        var bgNode = new cc.Node("ItemBg")
+        var bgGraphics = bgNode.addComponent(cc.Graphics)
+        // 根据排名设置不同颜色
+        var bgColor
+        if (rank === 4) {
+            bgColor = new cc.Color(60, 80, 100, 200)  // 第4名深蓝
+        } else if (rank <= 6) {
+            bgColor = new cc.Color(50, 70, 90, 180)   // 5-6名
+        } else {
+            bgColor = new cc.Color(40, 55, 75, 160)   // 7-10名
+        }
+        // 🔧【修复】机器人不再使用不同颜色，跟真人一样
+        bgGraphics.fillColor = bgColor
+        bgGraphics.roundRect(-itemWidth/2, -itemHeight/2, itemWidth, itemHeight, 8)
+        bgGraphics.fill()
+        bgGraphics.strokeColor = new cc.Color(100, 120, 150, 150)
+        bgGraphics.lineWidth = 1
+        bgGraphics.roundRect(-itemWidth/2, -itemHeight/2, itemWidth, itemHeight, 8)
+        bgGraphics.stroke()
+        bgNode.parent = itemNode
+
+        // 排名标签
+        var rankNode = new cc.Node("RankLabel")
+        rankNode.setPosition(-180, 0)
+        rankNode.setContentSize(50, 30)
+        var rankLabel = rankNode.addComponent(cc.Label)
+        rankLabel.string = "第" + rank + "名"
+        rankLabel.fontSize = 16
+        rankLabel.lineHeight = 20
+        rankLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER
+        // 根据排名设置颜色
+        if (rank === 4) {
+            rankNode.color = new cc.Color(100, 200, 255)  // 第4名蓝色
+        } else {
+            rankNode.color = new cc.Color(180, 180, 200)
+        }
+        rankNode.parent = itemNode
+
+        // 头像
+        var avatarNode = new cc.Node("Avatar")
+        avatarNode.setPosition(-100, 0)
+        avatarNode.setContentSize(32, 32)
+        
+        // 头像背景（圆形）
+        var avatarBg = new cc.Node("AvatarBg")
+        var avatarBgGraphics = avatarBg.addComponent(cc.Graphics)
+        avatarBgGraphics.fillColor = new cc.Color(60, 70, 100)
+        avatarBgGraphics.circle(0, 0, 17)
+        avatarBgGraphics.fill()
+        avatarBgGraphics.strokeColor = new cc.Color(120, 140, 170)
+        avatarBgGraphics.lineWidth = 1
+        avatarBgGraphics.circle(0, 0, 17)
+        avatarBgGraphics.stroke()
+        avatarBg.parent = avatarNode
+
+        // 🔧【修复】添加圆形遮罩节点，实现头像圆形裁剪
+        var avatarMaskNode = new cc.Node("AvatarMask")
+        avatarMaskNode.setContentSize(30, 30)
+        var avatarMask = avatarMaskNode.addComponent(cc.Mask)
+        avatarMask.type = cc.Mask.Type.ELLIPSE  // 椭圆形遮罩（圆形）
+        avatarMask.segements = 64  // 圆滑度
+        avatarMaskNode.parent = avatarNode
+
+        // 头像精灵 - 放在遮罩节点下
+        var avatarSpriteNode = new cc.Node("AvatarSprite")
+        var avatarSprite = avatarSpriteNode.addComponent(cc.Sprite)
+        avatarSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM
+        avatarSpriteNode.setContentSize(30, 30)
+        avatarSpriteNode.parent = avatarMaskNode  // 🔧【修复】放在遮罩节点下
+
+        // 加载头像
+        this._loadAvatarForListItem(avatarSprite, data.avatar, data.is_robot)
+        
+        avatarNode.parent = itemNode
+
+        // 昵称
+        var nameNode = new cc.Node("NameLabel")
+        nameNode.setPosition(20, 0)
+        nameNode.setContentSize(150, 30)
+        var nameLabel = nameNode.addComponent(cc.Label)
+        
+        // 处理机器人昵称
+        var displayName = data.player_name || "玩家"
+        if (data.is_robot) {
+            displayName = this._getRobotDisplayName(data.player_id, data.player_name)
+        }
+        nameLabel.string = displayName
+        nameLabel.fontSize = 16
+        nameLabel.lineHeight = 20
+        nameLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER
+        nameLabel.overflow = cc.Label.Overflow.CLAMP
+        nameNode.color = new cc.Color(255, 255, 255)
+        nameNode.parent = itemNode
+
+        // 金币
+        var coinNode = new cc.Node("CoinLabel")
+        coinNode.setPosition(175, 0)
+        coinNode.setContentSize(80, 30)
+        var coinLabel = coinNode.addComponent(cc.Label)
+        coinLabel.string = this._formatCoin(data.match_coin || 0)
+        coinLabel.fontSize = 16
+        coinLabel.lineHeight = 20
+        coinLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER
+        coinNode.color = new cc.Color(255, 200, 100)  // 金色
+        coinNode.parent = itemNode
+
+        return itemNode
+    },
+
+    /**
+     * 🔧【新增】为列表项加载头像
+     */
+    _loadAvatarForListItem: function(sprite, avatarUrl, isRobot) {
+        if (!sprite) return
+
+        // 机器人使用默认头像
+        if (isRobot) {
+            var robotAvatarIndex = Math.floor(Math.random() * 3) + 1
+            var defaultPath = "UI/headimage/avatar_" + robotAvatarIndex
+            cc.resources.load(defaultPath, cc.SpriteFrame, function(err, spriteFrame) {
+                if (!err && spriteFrame) {
+                    sprite.spriteFrame = spriteFrame
+                }
+            })
+            return
+        }
+
+        // 空值处理
+        if (!avatarUrl || avatarUrl === "") {
+            cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err, spriteFrame) {
+                if (!err && spriteFrame) {
+                    sprite.spriteFrame = spriteFrame
+                }
+            })
+            return
+        }
+
+        // 远程URL
+        if (avatarUrl.indexOf("http") === 0 || avatarUrl.indexOf("//") === 0) {
+            cc.assetManager.loadRemote(avatarUrl, { ext: '.png' }, function(err, texture) {
+                if (err || !texture) {
+                    cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
+                        if (!err2 && fallbackSprite) {
+                            sprite.spriteFrame = fallbackSprite
+                        }
+                    })
+                    return
+                }
+                var spriteFrame = new cc.SpriteFrame(texture)
+                sprite.spriteFrame = spriteFrame
+            })
+        } else {
+            // 本地资源
+            var localPath = "UI/headimage/" + avatarUrl
+            cc.resources.load(localPath, cc.SpriteFrame, function(err, spriteFrame) {
+                if (err || !spriteFrame) {
+                    cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
+                        if (!err2 && fallbackSprite) {
+                            sprite.spriteFrame = fallbackSprite
+                        }
+                    })
+                    return
+                }
+                sprite.spriteFrame = spriteFrame
+            })
+        }
+    },
+
+    /**
      * 🔧【修复】创建我的排名区域
      * 修复：调整位置、居中对齐、增大容器尺寸
      */
     _createMyRankArea: function(parentNode) {
         var container = new cc.Node("MyRankContainer")
-        container.setPosition(0, -200)  // 下移避免与领奖台重叠
+        container.setPosition(0, -255)  // 🔧【下移】从-220改为-255
         container.setContentSize(600, 60)  // 增大容器尺寸
 
         // 背景框 - 更宽更清晰
@@ -452,7 +726,7 @@ cc.Class({
      */
     _createConfirmButton: function(parentNode) {
         var btnNode = new cc.Node("ConfirmBtn")
-        btnNode.setPosition(0, -270)  // 下移确保与状态栏有足够间距
+        btnNode.setPosition(0, -310)  // 🔧【下移】从-270改为-310
         btnNode.setContentSize(200, 55)
 
         // 按钮背景 - 更醒目的样式
@@ -532,6 +806,10 @@ cc.Class({
         // 更新前三名
         this._updateTop3()
 
+        // 🔧【新增】更新TOP10列表
+        var top10 = this._top20.slice(0, 10)  // 取前10名
+        this._updateTop10List(top10)
+
         // 更新我的排名
         if (this.myRankLabel) {
             if (this._myRank > 0) {
@@ -604,10 +882,16 @@ cc.Class({
             }
         }
 
-        // 🔧【新增】加载头像
+        // 🔧【修复】加载头像 - 更新查找路径以适应新的节点结构
         var avatarContainer = node.getChildByName("AvatarContainer")
         if (avatarContainer) {
-            var avatarSpriteNode = avatarContainer.getChildByName("AvatarSprite")
+            // 🔧【修复】AvatarSprite 现在在 AvatarMask 节点下
+            var avatarMaskNode = avatarContainer.getChildByName("AvatarMask")
+            var avatarSpriteNode = avatarMaskNode ? avatarMaskNode.getChildByName("AvatarSprite") : null
+            if (!avatarSpriteNode) {
+                // 兼容旧结构：直接在 AvatarContainer 下
+                avatarSpriteNode = avatarContainer.getChildByName("AvatarSprite")
+            }
             if (avatarSpriteNode) {
                 var avatarSprite = avatarSpriteNode.getComponent(cc.Sprite)
                 if (avatarSprite) {
@@ -768,18 +1052,19 @@ cc.Class({
     },
 
     /**
-     * 🔧【新增】获取机器人显示名称
+     * 🔧【修复】获取机器人显示名称
+     * 🔧【修复】服务端现在会优先发送真实玩家昵称，客户端直接使用
      * @param {String} playerId - 玩家ID
-     * @param {String} originalName - 原始昵称
+     * @param {String} originalName - 原始昵称（来自服务端）
      * @returns {String} 显示名称
      */
     _getRobotDisplayName: function(playerId, originalName) {
-        // 如果原始名称已经是"智能陪练X号"格式，直接返回
-        if (originalName && originalName.indexOf("智能陪练") === 0) {
+        // 🔧【修复】直接使用服务端发送的名称（服务端已经处理了真实玩家昵称）
+        if (originalName && originalName !== "") {
             return originalName
         }
         
-        // 否则，生成"智能陪练X号"格式的名称
+        // 回退：如果没有名称，生成默认机器人名称
         var robotIndex = 1
         if (playerId) {
             var lastChar = playerId.toString().slice(-1)

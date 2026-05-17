@@ -60,6 +60,10 @@ cc.Class({
         if (this._quickEnterAnimating && this._quickEnterLoadingNode && this._quickEnterLoadingNode.isValid) {
             this._quickEnterLoadingNode.angle += dt * 180;
         }
+        // 🔧【新增】WebSocket连接Loading的旋转动画
+        if (this._wsLoadingAnimating && this._wsLoadingSpriteNode && this._wsLoadingSpriteNode.isValid) {
+            this._wsLoadingSpriteNode.angle += dt * 180;
+        }
     },
     
     _waitForMyglobal: function() {
@@ -129,6 +133,10 @@ cc.Class({
     _initUIAfterAuth: function() {
         
         try {
+            // ==================== 🔧【新增】WebSocket连接Loading界面 ====================
+            // 检查WebSocket是否已连接，如果未连接则显示Loading界面
+            this._checkAndShowWebSocketLoading();
+            
             // ==================== 初始化用户设置（从本地存储加载）====================
             this._initUserSettings();
             
@@ -172,6 +180,9 @@ cc.Class({
             
             // 获取最新的玩家余额（金币和竞技币）
             this._refreshPlayerBalance();
+            
+            // 🔧【新增】监听竞技币更新事件（报名成功后刷新UI）
+            this._listenArenaCoinUpdate();
             
             this._playHallBackgroundMusic();
             this._adjustBottomButtons();
@@ -233,6 +244,11 @@ cc.Class({
     
     // 显示离线提示
     _showOfflineMessage: function() {
+        // 🔧【修复】安全检查：如果节点已销毁，跳过显示
+        if (!this.node || !this.node.isValid) {
+            console.log("🏟️ [HallScene] 节点已销毁，跳过离线提示");
+            return;
+        }
         this._showMessage("网络连接已断开，正在重新连接...");
     },
     
@@ -284,6 +300,153 @@ cc.Class({
         });
     },
     
+    // ==================== 🔧【新增】WebSocket连接Loading界面 ====================
+    
+    /**
+     * 检查WebSocket连接状态，如果未连接则显示Loading界面
+     * 🔧【修复】只要物理连接已建立，就认为连接可用（服务端可能已发送过connected消息）
+     */
+    _checkAndShowWebSocketLoading: function() {
+        var myglobal = window.myglobal;
+        var socket = myglobal && myglobal.socket;
+        
+        // 检查WebSocket是否已连接
+        var isWebSocketOpen = socket && socket.isWebSocketOpen && socket.isWebSocketOpen();
+        var isConnected = socket && socket.isConnected && socket.isConnected();
+        var isAuthenticated = socket && socket.isAuthenticated && socket.isAuthenticated();
+        var hasConnectionToken = socket && socket.hasConnectionToken && socket.hasConnectionToken();
+        
+        console.log("🔌 [WebSocket] 检查连接状态: isWebSocketOpen=" + isWebSocketOpen + ", isConnected=" + isConnected + ", isAuthenticated=" + isAuthenticated + ", hasConnectionToken=" + hasConnectionToken);
+        
+        // 🔧【修复】只要物理连接已建立，就认为连接可用
+        // 因为服务端可能已经发送过 connected 消息，但大厅场景还没来得及监听
+        if (isWebSocketOpen) {
+            console.log("🔌 [WebSocket] 物理连接已建立，跳过Loading界面");
+            return;
+        }
+        
+        // 物理连接未建立，显示Loading界面
+        this._showWebSocketLoading();
+        
+        // 监听连接成功事件
+        var self = this;
+        // 🔧【修复】使用正确的事件监听器变量名（eventlister 小写 l）
+        var evt = window.evt || (window.myglobal && window.myglobal.eventlister);
+        if (evt) {
+            // 使用一次性监听，连接成功后自动移除
+            var connectionHandler = function(data) {
+                console.log("🔌 [WebSocket] 连接成功，关闭Loading界面");
+                self._hideWebSocketLoading();
+                evt.off("connection_success", connectionHandler);
+            };
+            evt.on("connection_success", connectionHandler);
+            
+            // 🔧【优化】缩短超时时间，物理连接通常很快建立
+            this._wsLoadingTimeout = setTimeout(function() {
+                console.log("🔌 [WebSocket] 连接超时，关闭Loading界面");
+                self._hideWebSocketLoading();
+                evt.off("connection_success", connectionHandler);
+            }, 5000);
+        }
+    },
+    
+    /**
+     * 显示WebSocket连接Loading界面
+     */
+    _showWebSocketLoading: function() {
+        if (this._wsLoadingNode && this._wsLoadingNode.isValid) {
+            return; // 已经显示
+        }
+        
+        console.log("🔌 [WebSocket] 显示Loading界面");
+        
+        var screenWidth = 1280;
+        var screenHeight = 720;
+        
+        // 创建Loading容器节点
+        var loadingNode = new cc.Node("WebSocketLoading");
+        loadingNode.setPosition(0, 0);
+        loadingNode.setContentSize(screenWidth, screenHeight);
+        
+        // 半透明遮罩背景
+        var bgNode = new cc.Node("Background");
+        bgNode.setContentSize(screenWidth, screenHeight);
+        var bgGraphics = bgNode.addComponent(cc.Graphics);
+        bgGraphics.fillColor = new cc.Color(0, 0, 0, 180);
+        bgGraphics.rect(-screenWidth/2, -screenHeight/2, screenWidth, screenHeight);
+        bgGraphics.fill();
+        bgNode.parent = loadingNode;
+        
+        // Loading图片容器
+        var containerNode = new cc.Node("Container");
+        containerNode.setPosition(0, 0);
+        containerNode.setContentSize(200, 200);
+        
+        // 加载并显示 loading_image.png
+        cc.resources.load("UI/loading_image", cc.SpriteFrame, function(err, spriteFrame) {
+            if (err) {
+                console.error("🔌 [WebSocket] 加载loading_image失败:", err);
+                return;
+            }
+            
+            if (loadingNode && loadingNode.isValid && containerNode && containerNode.isValid) {
+                var spriteNode = new cc.Node("LoadingSprite");
+                var sprite = spriteNode.addComponent(cc.Sprite);
+                sprite.spriteFrame = spriteFrame;
+                spriteNode.setPosition(0, 0);
+                spriteNode.parent = containerNode;
+                
+                // 设置初始角度，update中会旋转
+                spriteNode.angle = 0;
+                
+                // 保存引用，用于update中旋转
+                this._wsLoadingSpriteNode = spriteNode;
+            }
+        }.bind(this));
+        
+        // 提示文字
+        var tipNode = new cc.Node("TipLabel");
+        tipNode.setPosition(0, -120);
+        var tipLabel = tipNode.addComponent(cc.Label);
+        tipLabel.string = "正在连接服务器...";
+        tipLabel.fontSize = 24;
+        tipLabel.lineHeight = 30;
+        tipLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
+        tipNode.color = new cc.Color(255, 255, 255);
+        tipNode.parent = containerNode;
+        
+        containerNode.parent = loadingNode;
+        
+        // 添加到场景，设置最高层级
+        this.node.addChild(loadingNode);
+        loadingNode.zIndex = 9999;
+        
+        this._wsLoadingNode = loadingNode;
+        this._wsLoadingAnimating = true;
+    },
+    
+    /**
+     * 隐藏WebSocket连接Loading界面
+     */
+    _hideWebSocketLoading: function() {
+        // 清除超时定时器
+        if (this._wsLoadingTimeout) {
+            clearTimeout(this._wsLoadingTimeout);
+            this._wsLoadingTimeout = null;
+        }
+        
+        // 移除Loading节点
+        if (this._wsLoadingNode && this._wsLoadingNode.isValid) {
+            this._wsLoadingNode.destroy();
+            this._wsLoadingNode = null;
+        }
+        
+        this._wsLoadingAnimating = false;
+        this._wsLoadingSpriteNode = null;
+        
+        console.log("🔌 [WebSocket] Loading界面已关闭");
+    },
+    
     // 初始化 WebSocket 连接
     _initWebSocket: function() {
         var myglobal = window.myglobal;
@@ -292,16 +455,17 @@ cc.Class({
             return;
         }
         
-        // 检查是否已连接
-        if (myglobal.socket.isWebSocketOpen && myglobal.socket.isWebSocketOpen()) {
+        // 🔧【修复】检查连接是否已认证（带Token且有PlayerID）
+        // 不仅仅是检查物理连接，还要确保连接带有Token
+        if (myglobal.socket.isAuthenticated && myglobal.socket.isAuthenticated()) {
             return;
         }
         
-        // 检查逻辑连接状态
-        if (myglobal.socket.isConnected && myglobal.socket.isConnected()) {
-            return;
+        // 检查是否需要重新连接（有Token但连接没有Token）
+        var hasToken = myglobal.playerData && myglobal.playerData.token;
+        if (hasToken && myglobal.socket.hasConnectionToken && !myglobal.socket.hasConnectionToken()) {
+            console.log("🔌 [HallScene] 检测到连接无Token，需要重新连接...");
         }
-        
         
         // 初始化 WebSocket
         if (myglobal.socket.initSocket) {
@@ -1804,6 +1968,42 @@ cc.Class({
                 console.warn("🏆 [Arena] ⚠️ socket 或 onArenaChampionBroadcast 方法不可用");
             }
             
+            // 🔧【关键修复】在大厅场景也监听 room_joined 消息
+            // 这样即使玩家没有点击"进入"按钮，弹窗倒计时结束后也能进入游戏
+            if (socket && socket.onRoomJoined) {
+                this._hallSceneRoomJoinedHandler = function(roomData) {
+                    console.log("🏟️ [HallScene] ✅ 收到 room_joined 消息:", JSON.stringify(roomData));
+                    
+                    // 检查是否是竞技场房间
+                    var roomCategory = roomData.room_category || 1;
+                    if (roomCategory !== 2) {
+                        console.log("🏟️ [HallScene] 不是竞技场房间，忽略");
+                        return;
+                    }
+                    
+                    // 🔧【关键】防止重复处理
+                    if (self._arenaRoomJoinedProcessed) {
+                        console.log("🏟️ [HallScene] room_joined 已处理过，跳过");
+                        return;
+                    }
+                    self._arenaRoomJoinedProcessed = true;
+                    
+                    // 关闭弹窗（如果存在）
+                    if (self._arenaMatchStartDialog && self._arenaMatchStartDialog.isValid) {
+                        self._arenaMatchStartDialog.destroy();
+                        self._arenaMatchStartDialog = null;
+                    }
+                    
+                    // 进入游戏场景
+                    console.log("🏟️ [HallScene] 从 room_joined 进入游戏场景");
+                    self._enterArenaGameSceneFromRoomJoined(roomData);
+                };
+                socket.onRoomJoined(this._hallSceneRoomJoinedHandler);
+                console.log("🏟️ [Arena] ✅ room_joined 监听器已注册（大厅场景）");
+            } else {
+                console.warn("🏟️ [Arena] ⚠️ socket 或 onRoomJoined 方法不可用");
+            }
+            
             // 标记已注册
             this._arenaSocketListenersRegistered = true;
             console.log("🏟️ [Arena] ========== 竞技场监听器注册完成 ==========");
@@ -2117,19 +2317,9 @@ cc.Class({
         roomNode.color = cc.color(180, 180, 200);
         roomNode.parent = cardNode;
         
-        // 参赛人数
-        var playersNode = new cc.Node("Players");
-        playersNode.y = cardHeight/2 - 165;
-        var playersLabel = playersNode.addComponent(cc.Label);
-        playersLabel.string = "参赛人数: " + (data.total_players || 0) + " 人";
-        playersLabel.fontSize = 20;
-        playersLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-        playersNode.color = cc.color(100, 200, 100);
-        playersNode.parent = cardNode;
-        
         // 🔧【新增】倒计时显示 - 使用服务端返回的 start_time 计算剩余时间
         var countdownNode = new cc.Node("Countdown");
-        countdownNode.y = cardHeight/2 - 200;
+        countdownNode.y = cardHeight/2 - 165;
         var countdownLabel = countdownNode.addComponent(cc.Label);
         
         // 计算剩余时间：优先使用 start_time，否则使用 countdown
@@ -2174,8 +2364,23 @@ cc.Class({
             if (newRemaining <= 0) {
                 clearInterval(self._matchStartCountdownTimer);
                 self._matchStartCountdownTimer = null;
-                countdownLabel.string = "已超时";
-                countdownLabel.color = cc.color(150, 150, 150);
+                
+                // 🔧【关键修复】弹窗倒计时结束，自动进入独立的等待场景
+                // 这样玩家不会先看到大厅界面再跳转游戏场景，体验更流畅
+                console.log("🏟️ [Arena] 弹窗倒计时结束，自动进入等待场景 ArenaMatchWaitingScene");
+                
+                // 清除弹窗引用
+                self._arenaMatchStartDialog = null;
+                self._arenaMatchStartDialogRoomId = null;
+                self._arenaMatchStartDialogPeriodNo = null;
+                
+                // 销毁弹窗
+                if (dialogNode && dialogNode.isValid) {
+                    dialogNode.destroy();
+                }
+                
+                // 跳转到等待场景（等待场景会监听 room_joined 消息并直接进入游戏场景）
+                self._enterArenaMatch(data);
                 return;
             }
             
@@ -2321,6 +2526,8 @@ cc.Class({
     },
 
     // 🔧【新增】进入竞技场比赛
+    // 🔧【关键修改】跳转到独立的等待场景 ArenaMatchWaitingScene，而不是在大厅显示等待UI
+    // 这样倒计时结束后可以直接从等待场景进入游戏场景，体验更流畅
     _enterArenaMatch: function(data) {
         var self = this;
         var myglobal = window.myglobal;
@@ -2341,22 +2548,38 @@ cc.Class({
             window.arenaData.saveToLocal && window.arenaData.saveToLocal();
         }
         
-        // 🔧【关键修复】保存弹窗数据，供 _onArenaWaitingStatus 使用
-        // 不在本地计算倒计时，等服务端推送
-        this._pendingArenaEnterData = {
-            period_no: data.period_no || "",
-            room_id: data.room_id || 0,
-            room_name: data.room_name || "竞技场",
-            total_players: data.total_players || 0,
-            start_time: data.start_time,
-            message: data.message || "比赛即将开始！"
-        };
+        // 🔧【关键修改】保存等待数据到全局变量，供 ArenaMatchWaitingScene 使用
+        // 等待场景会从这个变量读取初始数据
+        if (myglobal) {
+            myglobal.arenaWaitingData = {
+                period_no: data.period_no || "",
+                room_id: data.room_id || 0,
+                room_name: data.room_name || "竞技场",
+                total_players: data.total_players || 0,
+                entered_players: 1,  // 当前玩家已进入
+                start_time: data.start_time || Date.now(),
+                countdown: data.countdown || 60,
+                players: [],  // 玩家列表会由服务端推送
+                message: data.message || "比赛即将开始！"
+            };
+            
+            // 同时保存房间配置
+            myglobal.currentRoomConfig = {
+                id: data.room_id,
+                room_name: data.room_name,
+                room_config_id: data.room_config_id,
+                room_category: 2,  // 竞技场
+                min_arena_coin: data.signup_fee,
+                match_rounds: data.match_rounds,
+                match_duration: data.match_duration
+            };
+            myglobal.currentRoomLevel = data.room_id;
+            myglobal.currentRoomName = data.room_name;
+            
+            console.log("🏟️ [Arena] 已保存等待数据到 myglobal.arenaWaitingData");
+        }
         
-        // 🔧【关键修复】提前注册事件监听器，确保能收到服务端推送
-        // 如果监听器还没有注册，先注册
-        this._ensureArenaWaitingEventsRegistered();
-        
-        // 🔧【修改】发送 arena_enter 请求，等待服务端推送 arena_waiting_status
+        // 🔧【关键修改】发送 arena_enter 请求
         var socket = myglobal && myglobal.socket;
         if (socket && socket.sendArenaEnter) {
             // 发送 arena_enter 请求
@@ -2365,31 +2588,13 @@ cc.Class({
                 room_id: data.room_id
             });
             
-            console.log("🏟️ [Arena] 已发送 arena_enter 请求，等待服务端推送等待状态...");
-            
-            // 🔧【关键修复】不立即显示等待界面，等服务端推送 arena_waiting_status
-            // 服务端会推送正确的倒计时
-        } else {
-            console.warn("🏟️ [Arena] socket 或 sendArenaEnter 方法不可用");
-            // 降级处理：直接进入游戏场景
-            var roomConfig = {
-                id: data.room_id,
-                room_name: data.room_name,
-                room_config_id: data.room_config_id,
-                room_category: 2,
-                min_arena_coin: data.signup_fee,
-                match_rounds: data.match_rounds,
-                match_duration: data.match_duration
-            };
-            
-            if (myglobal) {
-                myglobal.currentRoomConfig = roomConfig;
-                myglobal.currentRoomLevel = data.room_id;
-                myglobal.currentRoomName = data.room_name;
-            }
-            
-            this._enterArenaGameScene(data, roomConfig);
+            console.log("🏟️ [Arena] 已发送 arena_enter 请求");
         }
+        
+        // 🔧【关键修改】跳转到独立的等待场景
+        // 等待场景会监听服务端消息，倒计时结束后直接进入游戏场景
+        console.log("🏟️ [Arena] 跳转到等待场景 ArenaMatchWaitingScene");
+        cc.director.loadScene("ArenaMatchWaitingScene");
     },
     
     // ============================================================
@@ -3011,6 +3216,9 @@ cc.Class({
         
         console.log("🏟️ [ArenaWaiting] 分配阶段开始，准备进入游戏");
         
+        // 🔧【关键修复】设置标志，防止 room_joined 再次触发进入游戏场景
+        this._arenaRoomJoinedProcessed = true;
+        
         // 隐藏等待界面
         this._hideArenaWaitingUI();
         
@@ -3136,12 +3344,8 @@ cc.Class({
         bgNode.setContentSize(cc.size(95, 115));
         var bgGraphics = bgNode.addComponent(cc.Graphics);
         
-        // 根据是否是机器人设置不同背景色
-        if (player.is_robot) {
-            bgGraphics.fillColor = cc.color(60, 50, 80, 230);  // 紫色调 - 机器人
-        } else {
-            bgGraphics.fillColor = cc.color(40, 60, 80, 230);  // 蓝色调 - 真人
-        }
+        // 🔧【修复】机器人和真人使用相同背景色，不再区分
+        bgGraphics.fillColor = cc.color(40, 60, 80, 230);  // 统一蓝色调
         bgGraphics.roundRect(-47.5, -57.5, 95, 115, 8);
         bgGraphics.fill();
         bgNode.parent = itemNode;
@@ -3188,12 +3392,8 @@ cc.Class({
         nameNode.setContentSize(cc.size(90, 18));
         nameLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
         
-        // 真人白色，机器人金色
-        if (player.is_robot) {
-            nameNode.color = cc.color(255, 215, 100);  // 金色
-        } else {
-            nameNode.color = cc.color(255, 255, 255);  // 白色
-        }
+        // 🔧【修复】机器人和真人使用相同颜色，不再区分
+        nameNode.color = cc.color(255, 255, 255);  // 统一白色
         nameNode.parent = itemNode;
         
         // 状态标签
@@ -3254,7 +3454,7 @@ cc.Class({
         // 服务端上传的头像路径处理
         // 支持两种格式: "/uploads/file/..." 和 "uploads/file/..."
         var myglobal = window.myglobal;
-        var cdnUrl = myglobal && myglobal.cdnUrl ? myglobal.cdnUrl : "https://houtais.hongxiu88.com";
+        var cdnUrl = myglobal && myglobal.cdnUrl ? myglobal.cdnUrl : "https://apis.hongxiu88.com";
         
         if (avatarUrl.indexOf('/uploads/') === 0) {
             // 格式: /uploads/file/...
@@ -3326,19 +3526,52 @@ cc.Class({
         var self = this;
         var myglobal = window.myglobal;
         
+        // 🔧【关键修复】防止重复进入游戏场景
+        if (this._enterGameSceneInProgress) {
+            console.log("🏟️ [Arena] 已在进入游戏场景中，跳过");
+            return;
+        }
+        
+        // 🔧【关键修复】设置标志，防止 room_joined 再次触发
+        this._arenaRoomJoinedProcessed = true;
+        
         // 显示简短加载提示
         this._showMessageCenter("正在进入竞技场...");
         
+        // 🔧【关键修复】从 _arenaWaitingData 获取玩家数据
+        var waitingPlayers = this._arenaWaitingData && this._arenaWaitingData.players ? this._arenaWaitingData.players : [];
+        console.log("🏟️ [Arena] 从等待数据获取玩家数量:", waitingPlayers.length);
+        
+        // 🔧【关键修复】转换 players 数组为 playerdata 格式
+        var playerdata = waitingPlayers.map(function(p, idx) {
+            return {
+                accountid: p.player_id || p.id,
+                nick_name: p.player_name || p.name,
+                avatar: p.avatar || "avatar_1",
+                avatarUrl: p.avatar || "avatar_1",
+                gold_count: p.gold_count || 0,
+                goldcount: p.gold_count || 0,
+                seatindex: idx + 1,
+                isready: p.entered_at && p.entered_at > 0,
+                is_robot: p.is_robot || false,
+                room_category: 2,  // 竞技场
+                period_no: matchData.period_no
+            };
+        });
+        
         // 构造房间数据
+        // 🔧【修复】竞技场房间号不添加 arena_ 前缀
+        // 🔧【关键修复】如果 room_code 为空，不使用期号作为后备值，等待 ROOM_JOINED 消息更新
         var roomData = {
-            room_code: matchData.room_code || ("arena_" + matchData.period_no),
+            room_code: matchData.room_code || "",  // 房间号不带前缀，为空时等待服务端更新
             room_id: matchData.room_id,
             room_name: matchData.room_name,
             room_category: 2,  // 竞技场
             base_score: roomConfig.base_score || 1,
             multiplier: roomConfig.multiplier || 1,
             period_no: matchData.period_no,
-            match_rounds: matchData.match_rounds
+            match_rounds: matchData.match_rounds,
+            playerdata: playerdata  // 🔧【关键修复】添加玩家数据
         };
         
         // 保存房间数据
@@ -3347,6 +3580,7 @@ cc.Class({
             myglobal.playerData = myglobal.playerData || {};
             myglobal.playerData.bottom = roomConfig.base_score || 1;
             myglobal.playerData.rate = roomConfig.multiplier || 1;
+            console.log("🏟️ [Arena] myglobal.roomData 已设置, playerdata 数量:", playerdata.length);
         }
         
         // 🔧【关键】最多等待2秒后直接进入游戏场景
@@ -3370,9 +3604,16 @@ cc.Class({
     /**
      * 🔧【新增】从 room_joined 消息进入游戏场景
      * 🔧【修复】正确转换 players 数组为 playerdata 格式，确保头像、金币等显示正常
+     * 🔧【优化】检查是否有预加载数据，避免重复预加载
      */
     _enterArenaGameSceneFromRoomJoined: function(roomData) {
         console.log("🏟️ [Arena] 从 room_joined 进入游戏场景, roomData=" + JSON.stringify(roomData));
+        
+        // 🔧【关键修复】防止重复进入游戏场景
+        if (this._enterGameSceneInProgress) {
+            console.log("🏟️ [Arena] 已在进入游戏场景中，跳过（来自 room_joined）");
+            return;
+        }
         
         var myglobal = window.myglobal;
         
@@ -3429,8 +3670,18 @@ cc.Class({
             console.log("🏟️ [Arena] myglobal.roomData 已保存, playerdata=" + playerdata.length + "人");
         }
         
-        // 🔧【优化】先显示加载界面，预加载头像资源，然后再进入场景
-        this._showArenaLoadingAndPreload(playerdata, myglobal.roomData);
+        // 🔧【优化】检查是否有预加载的头像缓存
+        var hasAvatarCache = myglobal && myglobal._avatarCache && Object.keys(myglobal._avatarCache).length > 0;
+        console.log("🏟️ [Arena] 头像缓存状态:", hasAvatarCache ? "已有缓存" : "无缓存");
+        
+        // 🔧【优化】如果有预加载数据，直接进入场景；否则显示加载界面
+        if (hasAvatarCache) {
+            console.log("🏟️ [Arena] 使用预加载的头像缓存，直接进入场景");
+            this._enterGameScene(myglobal.roomData);
+        } else {
+            // 没有预加载，显示加载界面并预加载头像
+            this._showArenaLoadingAndPreload(playerdata, myglobal.roomData);
+        }
     },
 
     /**
@@ -6757,6 +7008,15 @@ cc.Class({
         }
         this._enterGameSceneInProgress = true;
         
+        // 🔧【新增】5秒后自动重置标志位（防止卡死）
+        var self = this;
+        setTimeout(function() {
+            if (self._enterGameSceneInProgress) {
+                console.log("🚀 [进入场景] 超时自动重置标志位");
+                self._enterGameSceneInProgress = false;
+            }
+        }, 5000);
+        
         console.log("🚀 [进入场景] 开始加载游戏场景");
         
         // 🔧【修复】添加安全检查，防止节点已销毁时报错
@@ -7743,6 +8003,37 @@ cc.Class({
         
         // 确保新创建的货币显示节点也已更新
         this._updateBothCurrencyDisplay();
+    },
+    
+    // 🔧【新增】监听竞技币更新事件（报名成功后刷新UI）
+    _listenArenaCoinUpdate: function() {
+        var self = this;
+        var myglobal = window.myglobal;
+        
+        if (!myglobal || !myglobal.eventlister) {
+            console.warn("🏟️ [HallScene] eventlister 未初始化，无法监听竞技币更新");
+            return;
+        }
+        
+        // 监听竞技币更新事件
+        myglobal.eventlister.on('arena_coin_updated', function(data) {
+            console.log("🏟️ [HallScene] 收到竞技币更新事件:", data);
+            
+            // 更新玩家数据
+            if (data && data.arena_coin !== undefined && myglobal.playerData) {
+                myglobal.playerData.arena_coin = data.arena_coin;
+            }
+            
+            // 刷新UI显示
+            self._updateBothCurrencyDisplay();
+            
+            // 同时也更新竞技币 Label（如果有）
+            if (self.arena_coin_label && data && data.arena_coin !== undefined) {
+                self.arena_coin_label.string = "竞技币: " + self._formatGold(data.arena_coin);
+            }
+        });
+        
+        console.log("🏟️ [HallScene] 已注册竞技币更新事件监听");
     },
     
     // 获取最新的玩家余额（金币和竞技币）

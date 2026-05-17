@@ -117,32 +117,58 @@ cc.Class({
     _registerEvents: function() {
         var self = this
         
-        // 监听等待状态推送
-        if (window.myglobal && window.myglobal.socket) {
-            var socket = window.myglobal.socket
-            
-            // 等待状态推送
-            socket.on("arena_waiting_status", function(data) {
-                console.log("🏟️ [ArenaEnterWaiting] 收到等待状态:", JSON.stringify(data))
-                self._onWaitingStatus(data)
-            })
-            
-            // 倒计时更新
-            socket.on("arena_waiting_tick", function(data) {
-                console.log("🏟️ [ArenaEnterWaiting] 倒计时更新:", data.countdown)
-                self._onWaitingTick(data)
-            })
-            
-            // 分配阶段开始
-            socket.on("arena_assign_start", function(data) {
-                console.log("🏟️ [ArenaEnterWaiting] 分配阶段开始:", JSON.stringify(data))
-                self._onAssignStart(data)
-            })
+        // 🔧【修复】使用正确的事件监听方式
+        // 获取全局事件监听器
+        var myglobal = window.myglobal
+        var evt = myglobal && myglobal.eventlister
+        
+        if (!evt) {
+            console.error("🏟️ [ArenaEnterWaiting] 事件监听器不可用")
+            return
         }
+        
+        // 等待状态推送
+        this._waitingStatusHandler = function(data) {
+            console.log("🏟️ [ArenaEnterWaiting] 收到等待状态:", JSON.stringify(data))
+            self._onWaitingStatus(data)
+        }
+        evt.on("arena_waiting_status_notify", this._waitingStatusHandler)
+        
+        // 倒计时更新
+        this._waitingTickHandler = function(data) {
+            console.log("🏟️ [ArenaEnterWaiting] 倒计时更新:", data.countdown)
+            self._onWaitingTick(data)
+        }
+        evt.on("arena_waiting_tick_notify", this._waitingTickHandler)
+        
+        // 分配阶段开始
+        this._assignStartHandler = function(data) {
+            console.log("🏟️ [ArenaEnterWaiting] 分配阶段开始:", JSON.stringify(data))
+            self._onAssignStart(data)
+        }
+        evt.on("arena_assign_start_notify", this._assignStartHandler)
+        
+        console.log("🏟️ [ArenaEnterWaiting] 事件监听注册完成")
     },
 
     _unregisterEvents: function() {
-        // 事件会随节点销毁自动取消
+        // 🔧【修复】正确取消事件监听
+        var myglobal = window.myglobal
+        var evt = myglobal && myglobal.eventlister
+        
+        if (!evt) return
+        
+        if (this._waitingStatusHandler) {
+            evt.off("arena_waiting_status_notify", this._waitingStatusHandler)
+        }
+        if (this._waitingTickHandler) {
+            evt.off("arena_waiting_tick_notify", this._waitingTickHandler)
+        }
+        if (this._assignStartHandler) {
+            evt.off("arena_assign_start_notify", this._assignStartHandler)
+        }
+        
+        console.log("🏟️ [ArenaEnterWaiting] 事件监听已取消")
     },
 
     // ============================================================
@@ -344,22 +370,13 @@ cc.Class({
         label.string = player.player_name || "玩家" + player.player_id
         label.fontSize = 18
         label.lineHeight = 24
-        nameLabel.color = player.is_robot ? new cc.Color(150, 150, 150) : new cc.Color(255, 255, 255)
+        // 🔧【修复】机器人和真人使用相同颜色，不再区分
+        nameLabel.color = new cc.Color(255, 255, 255)
         nameLabel.setPosition(-40, 0)
         nameLabel.anchorX = 0
         nameLabel.parent = itemNode
         
-        // 机器人标识
-        if (player.is_robot) {
-            var robotLabel = new cc.Node("RobotLabel")
-            var rLabel = robotLabel.addComponent(cc.Label)
-            rLabel.string = "[机器人]"
-            rLabel.fontSize = 14
-            rLabel.lineHeight = 18
-            robotLabel.color = new cc.Color(255, 200, 100)
-            robotLabel.setPosition(70, 0)
-            robotLabel.parent = itemNode
-        }
+        // 🔧【移除】不再显示机器人标识，让机器人看起来跟真人一样
         
         // 添加到容器
         var yPos = -index * 50

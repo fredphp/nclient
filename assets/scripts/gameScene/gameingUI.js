@@ -118,6 +118,8 @@ cc.Class({
         this._biddingPhase = "idle"
         this._gamePhase = "idle"  // 🔧【新增】游戏阶段: idle, bidding, playing
         this.cardsReady = false
+        this._pendingBidUI = false    // 🔧【新增】待显示的抢地主UI标记
+        this._pendingBidRound = 1     // 🔧【新增】待显示的抢地主轮次
         
         // 🕐【倒计时系统】
         this._bidTimeout = 0
@@ -146,6 +148,11 @@ cc.Class({
         this._competitionCountdown = 0        // 竞技场倒计时
         this._competitionCountdownTimer = null // 竞技场倒计时定时器
         this._wasDisconnected = false         // 是否在比赛中掉线
+        
+        // 🔧【托管】用户活动检测 - 触发取消托管
+        this._lastUserActivityTime = 0        // 上次用户活动时间
+        this._userActivityThrottle = 1000     // 节流时间（毫秒）
+        this._setupUserActivityDetection()
         
         // ============ 服务器消息监听 ============
         
@@ -271,10 +278,20 @@ cc.Class({
 
             // 显示出的牌到桌面
             var gameScene_script = this.node.parent.getComponent("gameScene")
-            if (!gameScene_script) return
+            if (!gameScene_script) {
+                console.error("🃏 [onOtherPlayerChuCard] gameScene_script 为空")
+                return
+            }
 
             var outCard_node = gameScene_script.getUserOutCardPosByAccount(data.accountid)
-            if (!outCard_node || !this.card_prefab) return
+            
+            // 🔧【调试】输出出牌区域查找结果
+            console.log("🃏 [onOtherPlayerChuCard] data.accountid:", data.accountid, "outCard_node:", outCard_node ? outCard_node.name : "null")
+            
+            if (!outCard_node || !this.card_prefab) {
+                console.error("🃏 [onOtherPlayerChuCard] outCard_node 或 card_prefab 为空, outCard_node:", !!outCard_node, "card_prefab:", !!this.card_prefab)
+                return
+            }
 
             // 【重要】直接使用服务端数据创建节点
             var node_cards = []
@@ -426,6 +443,17 @@ cc.Class({
         }.bind(this))
 
         // ============================================================
+        // 🔧【新增】用户活动监听 - 取消机器人托管
+        // 核心逻辑：只要用户有鼠标移动或点击事件，就发送取消托管请求
+        // ============================================================
+        this._isLocalTrustee = false  // 本地托管状态
+        this._lastActivityTime = 0    // 上次活动时间（用于防抖）
+        this._activityThrottleMs = 500 // 防抖间隔（毫秒）
+        
+        // 注册全局用户活动监听
+        this._setupUserActivityListener()
+
+        // ============================================================
         // 【竞技场】消息监听
         // ============================================================
         
@@ -464,6 +492,13 @@ cc.Class({
         myglobal.socket.onTournamentFinalRank(function(data){
             console.log("🏆 [gameingUI] 收到最终榜单:", JSON.stringify(data))
             this._onTournamentFinalRank(data)
+        }.bind(this))
+
+        // 🔧【新增】监听竞技场淘汰踢出房间通知
+        // 当玩家被淘汰时，服务端发送此消息通知客户端显示被淘汰提示
+        myglobal.socket.onArenaEliminatedKick(function(data){
+            console.log("🚪 [gameingUI] 收到淘汰踢出通知:", JSON.stringify(data))
+            this._onArenaEliminatedKick(data)
         }.bind(this))
 
         // 内部事件：显示底牌
@@ -576,11 +611,65 @@ cc.Class({
      * @param {Array} cards - 服务端原始手牌数据
      */
     renderCards: function(cards) {
+        // 🔧【关键修复】首先检查节点是否有效
+        if (!this.node || !this.node.isValid) {
+            console.warn("🎮 [renderCards] 节点已销毁或无效，跳过渲染")
+            return
+        }
+        
         if (!cards || cards.length === 0) {
             console.warn("🎮 [renderCards] 没有牌可渲染")
             return
         }
         
+        // 🔧【关键修复】等待卡牌图集加载完成
+        if (!window._cardAtlasLoaded) {
+            console.log("🎮 [renderCards] 卡牌图集未加载完成，等待中...")
+            var self = this
+            this._waitForAtlasAndRender(cards)
+            return
+        }
+        
+        this._doRenderCards(cards)
+    },
+    
+    /**
+     * 🔧【新增】等待图集加载完成后渲染
+     */
+    _waitForAtlasAndRender: function(cards) {
+        var self = this
+        var checkCount = 0
+        var maxCheck = 50  // 最多等待5秒（50 * 100ms）
+        
+        var checkAtlas = function() {
+            checkCount++
+            if (window._cardAtlasLoaded) {
+                console.log("🎮 [renderCards] 卡牌图集加载完成，开始渲染")
+                self._doRenderCards(cards)
+            } else if (checkCount < maxCheck) {
+                setTimeout(checkAtlas, 100)
+            } else {
+                console.error("🎮 [renderCards] 等待卡牌图集超时，强制重新加载")
+                // 强制重新加载
+                cc.resources.load("UI/card/card", cc.SpriteAtlas, function(err, atlas) {
+                    if (err) {
+                        console.error("🎮 [renderCards] 强制加载卡牌图集失败:", err)
+                        return
+                    }
+                    window._cardAtlasLoaded = true
+                    window._cardAtlas = atlas
+                    console.log("🎮 [renderCards] 强制加载卡牌图集成功")
+                    self._doRenderCards(cards)
+                })
+            }
+        }
+        checkAtlas()
+    },
+    
+    /**
+     * 🔧【新增】实际执行渲染手牌
+     */
+    _doRenderCards: function(cards) {
         // 🔧【关键修复】确保 cards_node 存在
         if (!this.cards_node) {
             console.warn("🎮 [renderCards] cards_node 未定义，尝试重新查找或创建")
@@ -659,6 +748,32 @@ cc.Class({
         
         // 发牌起始位置（屏幕中央上方，模拟发牌堆）
         var deckPos = cc.v2(DealConfig.deckPosition.x, DealConfig.deckPosition.y)
+        
+        // 🔧【关键修复】确保卡牌图集已加载
+        if (!window._cardAtlasLoaded || !window._cardAtlas) {
+            console.log("🎮 [_dealCardsWithAnimation] 图集未加载，先加载图集...")
+            cc.resources.load("UI/card/card", cc.SpriteAtlas, function(err, atlas) {
+                if (err) {
+                    console.error("🎮 [_dealCardsWithAnimation] 加载图集失败:", err)
+                    return
+                }
+                window._cardAtlasLoaded = true
+                window._cardAtlas = atlas
+                console.log("🎮 [_dealCardsWithAnimation] 图集加载完成，开始发牌")
+                self._doDealCards(sortedCards, cardParent, cardInterval, animDuration, deckPos)
+            })
+            return
+        }
+        
+        this._doDealCards(sortedCards, cardParent, cardInterval, animDuration, deckPos)
+    },
+    
+    /**
+     * 🔧【新增】实际执行发牌
+     */
+    _doDealCards: function(sortedCards, cardParent, cardInterval, animDuration, deckPos) {
+        var self = this
+        var myglobal = window.myglobal
         
         // 逐张发牌
         for (var i = 0; i < sortedCards.length; i++) {
@@ -788,6 +903,12 @@ cc.Class({
      * 🔥【修复】同时清理 cards_node 和 node.parent，确保无残留
      */
     clearAllCards: function() {
+        // 🔧【修复】首先检查节点是否有效
+        if (!this.node || !this.node.isValid) {
+            console.warn("🎮 [clearAllCards] 节点已销毁或无效，跳过")
+            return
+        }
+        
         // 🔧【修复】只清理手牌容器中的节点，不遍历node.parent
         if (this.cards_node) {
             this.cards_node.removeAllChildren()
@@ -851,14 +972,33 @@ cc.Class({
         var myglobal = window.myglobal
         if (!myglobal) return
         
+        console.log("🃏 [_checkAndShowRobUI] 检查是否需要显示抢地主UI, cardsReady:", this.cardsReady, "_pendingBidUI:", this._pendingBidUI, "_biddingPhase:", this._biddingPhase, "_gamePhase:", this._gamePhase)
+        
         // 🔧【关键修复】如果在出牌阶段，不显示抢地主按钮
-        var RoomState = window.RoomState || {}
-        if (this._biddingPhase === "idle" && this._gamePhase === "playing") {
+        if (this._gamePhase === "playing") {
+            console.log("🃏 [_checkAndShowRobUI] 当前是出牌阶段，不显示抢地主按钮")
             return
         }
         
         var myPlayerId = myglobal.socket.getPlayerInfo().id || myglobal.playerData.serverPlayerId || myglobal.playerData.accountID
+        
+        // 🔧【关键修复】检查是否有待显示的抢地主UI（服务端消息在发牌完成前到达）
+        if (this._pendingBidUI && this.cardsReady && this.robUI && !this.robUI.active) {
+            console.log("🃏 [_checkAndShowRobUI] 发牌完成，显示待处理的抢地主UI, round:", this._pendingBidRound)
+            if (this._pendingBidRound === 1) {
+                this._showBidUI("叫地主", "不叫")
+            } else {
+                this._showBidUI("抢地主", "不抢")
+            }
+            this._pendingBidUI = false
+            return
+        }
+        
+        // 🔧【修复】检查当前玩家是否需要显示按钮
+        console.log("🃏 [_checkAndShowRobUI] rob_player_accountid:", this.rob_player_accountid, "myPlayerId:", myPlayerId)
+        
         if (this.rob_player_accountid == myPlayerId && this.cardsReady && this.robUI && !this.robUI.active) {
+            console.log("🃏 [_checkAndShowRobUI] 轮到我，显示抢地主按钮, _biddingPhase:", this._biddingPhase)
             if (this._biddingPhase === "bidding") {
                 this._showBidUI("叫地主", "不叫")
             } else {
@@ -879,6 +1019,9 @@ cc.Class({
         // 🔒【重要】先停止之前的倒计时（服务器轮转了）
         this._stopBidCountdown()
 
+        // 🔧【修复】确保设置游戏阶段
+        this._gamePhase = "bidding"
+        
         this.rob_player_accountid = playerId
         this._bidTimeout = timeout
         this._biddingPhase = round === 1 ? "bidding" : "robbing"
@@ -886,14 +1029,28 @@ cc.Class({
 
         var myPlayerId = myglobal.socket.getPlayerInfo().id || myglobal.playerData.serverPlayerId || myglobal.playerData.accountID
 
-        if (String(playerId) === String(myPlayerId) && this.cardsReady) {
-            if (round === 1) {
-                this._showBidUI("叫地主", "不叫")
+        console.log("🃏 [_processCallLandlordTurn] playerId:", playerId, "myPlayerId:", myPlayerId, "round:", round, "cardsReady:", this.cardsReady)
+
+        // 🔧【关键修复】检查是否轮到当前玩家
+        if (String(playerId) === String(myPlayerId)) {
+            // 🔧【关键修复】如果发牌还没完成，等待发牌完成后再显示按钮
+            if (!this.cardsReady) {
+                console.log("🃏 [_processCallLandlordTurn] 发牌未完成，等待发牌完成后再显示抢地主按钮")
+                // 标记需要显示抢地主UI，在发牌完成后会调用 _checkAndShowRobUI
+                this._pendingBidUI = true
+                this._pendingBidRound = round
             } else {
-                this._showBidUI("抢地主", "不抢")
+                // 发牌已完成，直接显示按钮
+                console.log("🃏 [_processCallLandlordTurn] 发牌已完成，直接显示抢地主按钮")
+                if (round === 1) {
+                    this._showBidUI("叫地主", "不叫")
+                } else {
+                    this._showBidUI("抢地主", "不抢")
+                }
             }
         } else {
             this._hideRobUI()
+            this._pendingBidUI = false  // 清除待显示标记
             if (this.node && this.node.parent) {
                 this.node.parent.emit("call_landlord_turn_event", {
                     player_id: playerId,
@@ -906,19 +1063,30 @@ cc.Class({
     },
 
     _showBidUI: function(confirmText, cancelText) {
-        if (!this.robUI) return
+        console.log("🎯 ========== [_showBidUI] 显示抢地主按钮 ==========")
+        console.log("🎯 [_showBidUI] confirmText:", confirmText, "cancelText:", cancelText)
+        console.log("🎯 [_showBidUI] robUI 存在:", !!this.robUI)
+        
+        if (!this.robUI) {
+            console.error("🎯 [_showBidUI] robUI 为空，无法显示按钮！")
+            return
+        }
         
         if (this.playingUI_node) {
             this.playingUI_node.active = false
         }
         
-        var confirmBtn = this.robUI.getChildByName("btn_qiandz")
-        var cancelBtn = this.robUI.getChildByName("btn_buqiandz")
+        // 🔧【关键修复】场景中的按钮名称是 qiangzhuang 和 buqiangzhuang
+        var confirmBtn = this.robUI.getChildByName("qiangzhuang")
+        var cancelBtn = this.robUI.getChildByName("buqiangzhuang")
+        
+        console.log("🎯 [_showBidUI] confirmBtn 存在:", !!confirmBtn, "cancelBtn 存在:", !!cancelBtn)
         
         if (confirmBtn) {
             var label = confirmBtn.getChildByName("Label")
             if (label && label.getComponent(cc.Label)) {
                 label.getComponent(cc.Label).string = confirmText
+                console.log("🎯 [_showBidUI] 设置确认按钮文字:", confirmText)
             }
         }
         
@@ -926,10 +1094,12 @@ cc.Class({
             var label = cancelBtn.getChildByName("Label")
             if (label && label.getComponent(cc.Label)) {
                 label.getComponent(cc.Label).string = cancelText
+                console.log("🎯 [_showBidUI] 设置取消按钮文字:", cancelText)
             }
         }
         
         this.robUI.active = true
+        console.log("🎯 [_showBidUI] robUI.active 已设置为 true")
         this._startBidCountdown()
         
         if (this.node && this.node.parent) {
@@ -939,6 +1109,7 @@ cc.Class({
                 timeout: this._bidTimeout || 15
             })
         }
+        console.log("🎯 [_showBidUI] ========== 抢地主按钮显示完成 ==========")
     },
     
     _hideRobUI: function() {
@@ -1632,6 +1803,32 @@ cc.Class({
                 var cardsToPlay = this.choose_card_data.map(function(c) {
                     return c.card_data || c
                 })
+                
+                // 🔧【关键修复】检查是否有重复的牌（防止选牌bug）
+                var uniqueCards = {}
+                var hasDuplicate = false
+                for (var i = 0; i < cardsToPlay.length; i++) {
+                    var key = cardsToPlay[i].suit + "_" + cardsToPlay[i].rank
+                    if (uniqueCards[key]) {
+                        hasDuplicate = true
+                        console.error("🃏 [pushcard] 检测到重复的牌:", cardsToPlay[i])
+                        break
+                    }
+                    uniqueCards[key] = true
+                }
+                
+                if (hasDuplicate) {
+                    // 有重复牌，重置选牌状态
+                    this.tipsLabel.string = "选牌异常，请重新选牌"
+                    var self = this
+                    this._resetCardFlags()
+                    this.choose_card_data = []
+                    setTimeout(function() {
+                        self.tipsLabel.string = ""
+                    }, 2000)
+                    return
+                }
+                
                 var validationResult = this._validateHandType(cardsToPlay)
                 if (!validationResult.valid) {
                     this.tipsLabel.string = validationResult.message
@@ -1922,6 +2119,11 @@ cc.Class({
     },
     
     _getOutCardNode: function(accountid) {
+        // 🔧【修复】检查 node.parent 是否存在
+        if (!this.node || !this.node.isValid || !this.node.parent) {
+            console.warn("🃏 [_getOutCardNode] node 或 node.parent 未定义或已销毁")
+            return null
+        }
         var gameScene_script = this.node.parent.getComponent("gameScene")
         return gameScene_script ? gameScene_script.getUserOutCardPosByAccount(accountid) : null
     },
@@ -1995,10 +2197,108 @@ cc.Class({
      *   - reason: 原因 (timeout/disconnect/reconnect)
      */
     _onTrusteeStateNotify: function(data) {
+        var myglobal = window.myglobal
+        if (!myglobal) return
+        
+        // 获取当前玩家ID
+        var myPlayerId = myglobal.socket.getPlayerInfo().id || myglobal.playerData.serverPlayerId || myglobal.playerData.accountID
+        
+        // 更新本地托管状态（仅当是自己时）
+        if (String(data.player_id) === String(myPlayerId)) {
+            this._isLocalTrustee = data.is_trustee
+            console.log("🎮 [托管] 本地托管状态更新:", data.is_trustee, "原因:", data.reason)
+        }
+        
         // 通知所有玩家节点更新托管状态
         if (this.node && this.node.parent) {
             this.node.parent.emit("trustee_state_update", data)
         }
+    },
+
+    // ============================================================
+    // 🔧【新增】用户活动监听 - 取消机器人托管
+    // ============================================================
+
+    /**
+     * 设置用户活动监听器
+     * 当检测到用户活动（鼠标移动/点击/触摸）时，发送取消托管请求
+     */
+    _setupUserActivityListener: function() {
+        var self = this
+        
+        // 监听鼠标移动事件（全局）
+        cc.systemEvent.on(cc.SystemEvent.EventType.MOUSE_MOVE, function(event) {
+            self._onUserActivity("mouse_move")
+        })
+        
+        // 监听鼠标点击事件（全局）
+        cc.systemEvent.on(cc.SystemEvent.EventType.MOUSE_DOWN, function(event) {
+            self._onUserActivity("mouse_down")
+        })
+        
+        // 监听触摸开始事件（移动端）
+        cc.systemEvent.on(cc.SystemEvent.EventType.TOUCH_START, function(event) {
+            self._onUserActivity("touch_start")
+        })
+        
+        // 监听触摸移动事件（移动端）
+        cc.systemEvent.on(cc.SystemEvent.EventType.TOUCH_MOVE, function(event) {
+            self._onUserActivity("touch_move")
+        })
+        
+        console.log("🎮 [用户活动] 已注册全局活动监听器")
+    },
+
+    /**
+     * 处理用户活动
+     * 如果玩家处于托管状态，发送取消托管请求
+     * @param {string} activityType - 活动类型
+     */
+    _onUserActivity: function(activityType) {
+        // 只在托管状态下处理
+        if (!this._isLocalTrustee) {
+            return
+        }
+        
+        // 防抖：限制发送频率
+        var now = Date.now()
+        if (now - this._lastActivityTime < this._activityThrottleMs) {
+            return
+        }
+        this._lastActivityTime = now
+        
+        console.log("🎮 [用户活动] 检测到用户活动:", activityType, "发送取消托管请求")
+        
+        // 发送取消托管请求
+        this._sendCancelTrustee()
+    },
+
+    /**
+     * 发送取消托管请求到服务端
+     */
+    _sendCancelTrustee: function() {
+        var myglobal = window.myglobal
+        if (!myglobal || !myglobal.socket) {
+            console.warn("🎮 [取消托管] socket 未初始化")
+            return
+        }
+        
+        // 检查是否有对应的发送方法
+        if (myglobal.socket.cancelTrustee) {
+            myglobal.socket.cancelTrustee()
+        } else if (myglobal.socket.send) {
+            // 直接发送消息
+            var msg = {
+                type: "cancel_trustee",
+                payload: {}
+            }
+            myglobal.socket.send(JSON.stringify(msg))
+        } else {
+            console.warn("🎮 [取消托管] 无法发送取消托管请求")
+        }
+        
+        // 立即更新本地状态，避免重复发送
+        this._isLocalTrustee = false
     },
 
     /**
@@ -2535,10 +2835,21 @@ cc.Class({
      * @param {Array} cards - 底牌数据
      */
     _showBottomCardsToAll: function(cards) {
+        // 🔧【修复】首先检查节点是否有效
+        if (!this.node || !this.node.isValid) {
+            console.warn("🃏 [_showBottomCardsToAll] 节点已销毁或无效，跳过")
+            return
+        }
+        
         if (!cards || cards.length === 0) {
             return
         }
         
+        // 🔧【修复】检查 bottom_card 数组是否存在
+        if (!this.bottom_card || !Array.isArray(this.bottom_card)) {
+            console.warn("🃏 [_showBottomCardsToAll] bottom_card 未初始化")
+            return
+        }
         
         // 更新底牌显示
         for (var i = 0; i < cards.length && i < this.bottom_card.length; i++) {
@@ -2558,6 +2869,12 @@ cc.Class({
      * @param {Array} cards - 地主的完整手牌（含底牌）
      */
     _updateLandlordHandCards: function(cards) {
+        // 🔧【修复】首先检查节点是否有效
+        if (!this.node || !this.node.isValid) {
+            console.warn("🃏 [_updateLandlordHandCards] 节点已销毁或无效，跳过")
+            return
+        }
+        
         if (!cards || cards.length === 0) {
             return
         }
@@ -3068,6 +3385,12 @@ cc.Class({
      * @param {String} accountid - 玩家ID
      */
     _showPassEffect: function(accountid) {
+        
+        // 🔧【修复】检查 node.parent 是否存在
+        if (!this.node || !this.node.isValid || !this.node.parent) {
+            console.warn("🃏 [_showPassEffect] node 或 node.parent 未定义或已销毁")
+            return
+        }
         
         // 获取对应玩家的出牌区域
         var gameScene_script = this.node.parent.getComponent("gameScene")
@@ -4775,8 +5098,8 @@ cc.Class({
     _clearAllOutCardZones: function() {
         
         // 🔧【修复】添加更完整的空值检查
-        if (!this.node) {
-            console.warn("🎮 [_clearAllOutCardZones] this.node 为空")
+        if (!this.node || !this.node.isValid) {
+            console.warn("🎮 [_clearAllOutCardZones] this.node 为空或已销毁")
             return
         }
         
@@ -5111,67 +5434,15 @@ cc.Class({
         this._playGameResultSound(isWinner)
         
         // ============================================================
-        // 🔧【关键修复】立即启动本地倒计时定时器
-        // 同时注册服务端消息监听，双保险确保倒计时正常工作
+        // 🔧【关键修复】完全依赖服务端推送的倒计时消息
+        // 不使用本地倒计时定时器，确保所有客户端行为一致
+        // 服务端每秒广播 arena_countdown_tick 消息
         // ============================================================
         
-        // 启动本地倒计时定时器
-        this._startLocalArenaCountdown(initialCountdown)
-        
-        // 注册服务端倒计时消息监听（作为备份）
+        // 注册服务端倒计时消息监听
         this._setupArenaCountdownListeners()
-    },
-    
-    /**
-     * 🔧【新增】启动本地竞技场倒计时
-     * @param {Number} seconds - 初始倒计时秒数
-     */
-    _startLocalArenaCountdown: function(seconds) {
-        var self = this
         
-        console.log("🏟️ [_startLocalArenaCountdown] 开始启动倒计时, seconds:", seconds)
-        
-        // 停止之前的倒计时
-        if (this._localArenaCountdownTimer) {
-            this.unschedule(this._localArenaCountdownTick)
-            this._localArenaCountdownTimer = null
-        }
-        
-        this._arenaCountdownSeconds = seconds
-        
-        // 🔧【修复】确保初始UI正确显示
-        this._updateArenaCountdownUI(seconds)
-        
-        // 🔧【修复】使用 cc.director 的时间调度，确保在所有情况下都能工作
-        // 每秒tick一次，无限重复
-        this.schedule(this._localArenaCountdownTick, 1, cc.macro.REPEAT_FOREVER, 1)
-        this._localArenaCountdownTimer = true
-        
-        console.log("🏟️ [_startLocalArenaCountdown] 本地倒计时已启动")
-    },
-    
-    /**
-     * 🔧【新增】本地竞技场倒计时Tick
-     */
-    _localArenaCountdownTick: function() {
-        if (this._arenaCountdownSeconds <= 0) {
-            this.unschedule(this._localArenaCountdownTick)
-            this._localArenaCountdownTimer = null
-            console.log("🏟️ [_localArenaCountdownTick] 倒计时结束，等待服务端消息...")
-            
-            // 🔧【修复】倒计时归0后显示等待提示，继续等待服务端消息
-            // 服务端会发送 MsgArenaAutoReady 或新一轮游戏消息
-            this._updateArenaCountdownUI(0)
-            this._showWaitingForServer()
-            return
-        }
-        
-        this._arenaCountdownSeconds--
-        
-        // 更新UI
-        this._updateArenaCountdownUI(this._arenaCountdownSeconds)
-        
-        console.log("🏟️ [_localArenaCountdownTick] 剩余:", this._arenaCountdownSeconds)
+        console.log("🏟️ [显示结算弹窗] 初始倒计时:", initialCountdown, "秒，等待服务端推送...")
     },
     
     /**
@@ -5197,7 +5468,7 @@ cc.Class({
     
     /**
      * 🔧【新增】设置竞技场倒计时消息监听
-     * 监听服务端推送的倒计时消息（作为本地倒计时的备份和同步）
+     * 🔧【关键】完全依赖服务端推送，不使用本地倒计时定时器
      */
     _setupArenaCountdownListeners: function() {
         var self = this
@@ -5996,6 +6267,134 @@ cc.Class({
     },
     
     /**
+     * 🚪【竞技场】处理淘汰踢出房间通知
+     * 当玩家被淘汰时，服务端发送此消息
+     * @param {Object} data - { period_no, player_id, message }
+     */
+    _onArenaEliminatedKick: function(data) {
+        console.log("🚪 [_onArenaEliminatedKick] 收到淘汰踢出通知:", JSON.stringify(data))
+        
+        var self = this
+        var winSize = cc.winSize
+        
+        // 停止所有倒计时
+        this._stopPlayCountdown()
+        this._stopBidCountdown()
+        if (this._localArenaCountdownTimer) {
+            this.unschedule(this._localArenaCountdownTick)
+            this._localArenaCountdownTimer = null
+        }
+        
+        // 隐藏比赛金币显示
+        this._hideMatchCoinDisplay()
+        
+        // 关闭之前的结算弹窗
+        if (this._gameResultPopup || this._gameResultMask) {
+            this._closeGameResultPopup(this._gameResultPopup, this._gameResultMask)
+        }
+        
+        // 显示淘汰提示弹窗
+        var canvas = cc.find("Canvas") || cc.find("UI_ROOT") || this.node.parent
+        if (!canvas) canvas = this.node
+        
+        // ========== 遮罩层 ==========
+        var maskNode = new cc.Node("EliminatedKickMask")
+        maskNode.addComponent(cc.BlockInputEvents)
+        maskNode.color = new cc.Color(10, 5, 30)
+        maskNode.opacity = 200
+        maskNode.width = winSize.width * 2
+        maskNode.height = winSize.height * 2
+        maskNode.zIndex = 999
+        maskNode.parent = canvas
+        
+        // ========== 弹窗容器 ==========
+        var popupNode = new cc.Node("EliminatedKickPopup")
+        popupNode.scale = 0.3
+        popupNode.opacity = 0
+        popupNode.zIndex = 1000
+        popupNode.parent = canvas
+        
+        // 弹窗尺寸
+        var popupWidth = 500
+        var popupHeight = 280
+        
+        // ========== 主背景 ==========
+        var bgNode = new cc.Node("Bg")
+        var bg = bgNode.addComponent(cc.Graphics)
+        bg.fillColor = new cc.Color(30, 22, 54, 250)
+        bg.roundRect(-popupWidth/2, -popupHeight/2, popupWidth, popupHeight, 16)
+        bg.fill()
+        bg.strokeColor = new cc.Color(255, 100, 100)
+        bg.lineWidth = 3
+        bg.roundRect(-popupWidth/2, -popupHeight/2, popupWidth, popupHeight, 16)
+        bg.stroke()
+        bgNode.parent = popupNode
+        
+        // ========== 标题 ==========
+        var titleNode = new cc.Node("Title")
+        var titleLabel = titleNode.addComponent(cc.Label)
+        titleLabel.string = "💔 淘汰通知"
+        titleLabel.fontSize = 32
+        titleLabel.lineHeight = 40
+        titleNode.color = new cc.Color(255, 100, 100)
+        titleNode.y = 80
+        titleNode.parent = popupNode
+        
+        // ========== 消息内容 ==========
+        var msgNode = new cc.Node("Message")
+        var msgLabel = msgNode.addComponent(cc.Label)
+        msgLabel.string = data.message || "您已被淘汰，即将离开房间"
+        msgLabel.fontSize = 24
+        msgLabel.lineHeight = 32
+        msgNode.color = new cc.Color(220, 220, 220)
+        msgNode.y = 20
+        msgNode.parent = popupNode
+        
+        // ========== 确定按钮 ==========
+        var btnNode = new cc.Node("ConfirmBtn")
+        var btnBg = btnNode.addComponent(cc.Graphics)
+        btnBg.fillColor = new cc.Color(80, 140, 200)
+        btnBg.roundRect(-80, -25, 160, 50, 8)
+        btnBg.fill()
+        btnNode.y = -70
+        btnNode.parent = popupNode
+        
+        var btnLabelNode = new cc.Node("Label")
+        var btnLabel = btnLabelNode.addComponent(cc.Label)
+        btnLabel.string = "确定"
+        btnLabel.fontSize = 24
+        btnLabelNode.color = new cc.Color(255, 255, 255)
+        btnLabelNode.parent = btnNode
+        
+        // 按钮点击事件
+        btnNode.on(cc.Node.EventType.TOUCH_END, function() {
+            // 关闭弹窗
+            popupNode.destroy()
+            maskNode.destroy()
+            
+            // 返回大厅
+            cc.director.loadScene("hallScene")
+        })
+        
+        // 弹窗入场动画
+        popupNode.runAction(cc.sequence(
+            cc.spawn(
+                cc.scaleTo(0.3, 1.0).easing(cc.easeBackOut()),
+                cc.fadeIn(0.3)
+            )
+        ))
+        
+        // 3秒后自动返回大厅
+        this.scheduleOnce(function() {
+            if (popupNode && popupNode.parent) {
+                popupNode.destroy()
+                maskNode.destroy()
+                cc.director.loadScene("hallScene")
+            }
+        }, 3)
+    },
+    
+    /**
      * 🏆【竞技场】显示最终榜单弹窗（完整版 - 带滚动列表）
      * @param {Object} data - { period_no, total_players, top3, top20, my_rank, my_match_coin }
      */
@@ -6286,10 +6685,9 @@ cc.Class({
         // 玩家名称
         var nameNode = new cc.Node("Name")
         var nameLabel = nameNode.addComponent(cc.Label)
+        // 🔧【修复】直接使用服务端发送的玩家昵称，不再根据 is_robot 覆盖
+        // 服务端已经正确发送了真实玩家昵称（包括机器人玩家的真实昵称）
         var playerName = rankData.player_name || "玩家"
-        if (rankData.is_robot) {
-            playerName = this._getRobotDisplayName(rankData.player_id, rankData.player_name)
-        }
         nameLabel.string = playerName
         nameLabel.fontSize = 16
         nameLabel.horizontalAlign = cc.Label.HorizontalAlign.LEFT
@@ -6428,11 +6826,9 @@ cc.Class({
         // ========== 玩家名称 ==========
         var nameLabelNode = new cc.Node("Name")
         var nameLabel = nameLabelNode.addComponent(cc.Label)
+        // 🔧【修复】直接使用服务端发送的玩家昵称，不再根据 is_robot 覆盖
+        // 服务端已经正确发送了真实玩家昵称（包括机器人玩家的真实昵称）
         var playerName = rankData.player_name || "玩家"
-        if (rankData.is_robot) {
-            // 机器人使用智能陪练名称
-            playerName = this._getRobotDisplayName(rankData.player_id, rankData.player_name)
-        }
         nameLabel.string = playerName
         nameLabel.fontSize = 18
         nameLabel.enableBold = true
@@ -6458,14 +6854,15 @@ cc.Class({
     },
     
     /**
-     * 获取机器人显示名称
+     * 获取机器人显示名称（已弃用 - 保留备用）
+     * 🔧【修复】服务端已经正确发送真实玩家昵称，不再需要此方法覆盖
      */
     _getRobotDisplayName: function(playerId, originalName) {
-        // 如果原始名称已经是"智能陪练X号"格式，直接返回
-        if (originalName && originalName.indexOf("智能陪练") === 0) {
+        // 直接返回原始名称，服务端已经发送正确的昵称
+        if (originalName) {
             return originalName
         }
-        // 否则，生成"智能陪练X号"格式的名称
+        // 如果没有名称，返回默认机器人名称
         var robotIndex = 1
         if (playerId) {
             var lastChar = playerId.toString().slice(-1)
@@ -6483,73 +6880,176 @@ cc.Class({
     _loadAvatarSprite: function(sprite, avatarUrl, isRobot) {
         if (!sprite) return
         
-        // 机器人使用默认头像（avatar_1 到 avatar_3 随机）
-        if (isRobot) {
-            var robotAvatarIndex = Math.floor(Math.random() * 3) + 1
-            var defaultPath = "UI/headimage/avatar_" + robotAvatarIndex
-            cc.resources.load(defaultPath, cc.SpriteFrame, function(err, spriteFrame) {
-                if (!err && spriteFrame && sprite.isValid) {
-                    sprite.spriteFrame = spriteFrame
-                }
-            })
-            return
-        }
+        // 🔧【修复】优先使用服务端发送的头像URL，无论 isRobot 值是什么
+        // 服务端已经正确发送了真实玩家的头像URL（包括机器人玩家的头像）
         
-        // 真人玩家
-        if (!avatarUrl || avatarUrl === "") {
-            // 使用默认头像
-            cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err, spriteFrame) {
-                if (!err && spriteFrame && sprite.isValid) {
-                    sprite.spriteFrame = spriteFrame
+        // 如果有有效的头像URL，使用服务端发送的URL
+        if (avatarUrl && avatarUrl !== "") {
+            // 判断是URL还是本地资源名
+            if (avatarUrl.indexOf("http") === 0 || avatarUrl.indexOf("//") === 0 || avatarUrl.indexOf("/uploads") === 0) {
+                // 远程URL - 处理相对路径
+                var fullUrl = avatarUrl
+                if (avatarUrl.indexOf("/uploads") === 0) {
+                    var myglobal = window.myglobal
+                    var cdnUrl = myglobal && myglobal.cdnUrl ? myglobal.cdnUrl : "https://apis.hongxiu88.com"
+                    fullUrl = cdnUrl + avatarUrl
                 }
-            })
-            return
-        }
-        
-        // 判断是URL还是本地资源名
-        if (avatarUrl.indexOf("http") === 0 || avatarUrl.indexOf("//") === 0) {
-            // 远程URL
-            cc.assetManager.loadRemote(avatarUrl, { ext: '.png' }, function(err, texture) {
-                if (err || !texture) {
-                    // 加载失败，使用默认头像
-                    cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
-                        if (!err2 && fallbackSprite && sprite.isValid) {
-                            sprite.spriteFrame = fallbackSprite
-                        }
-                    })
-                    return
-                }
-                try {
-                    if (sprite.isValid) {
-                        var spriteFrame = new cc.SpriteFrame(texture)
-                        sprite.spriteFrame = spriteFrame
+                cc.assetManager.loadRemote(fullUrl, { ext: '.png' }, function(err, texture) {
+                    if (err || !texture) {
+                        // 加载失败，使用默认头像
+                        cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
+                            if (!err2 && fallbackSprite && sprite.isValid) {
+                                sprite.spriteFrame = fallbackSprite
+                            }
+                        })
+                        return
                     }
-                } catch (e) {
-                    // 使用默认头像
-                    cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
-                        if (!err2 && fallbackSprite && sprite.isValid) {
-                            sprite.spriteFrame = fallbackSprite
+                    try {
+                        if (sprite.isValid) {
+                            var spriteFrame = new cc.SpriteFrame(texture)
+                            sprite.spriteFrame = spriteFrame
                         }
-                    })
-                }
-            })
-        } else {
+                    } catch (e) {
+                        // 使用默认头像
+                        cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
+                            if (!err2 && fallbackSprite && sprite.isValid) {
+                                sprite.spriteFrame = fallbackSprite
+                            }
+                        })
+                    }
+                })
+                return
+            }
+            
             // 本地资源名
-            var localPath = "UI/headimage/" + avatarUrl
-            cc.resources.load(localPath, cc.SpriteFrame, function(err, spriteFrame) {
-                if (err || !spriteFrame) {
+            var resourcePath = "UI/headimage/" + avatarUrl
+            cc.resources.load(resourcePath, cc.SpriteFrame, function(err, spriteFrame) {
+                if (!err && spriteFrame && sprite.isValid) {
+                    sprite.spriteFrame = spriteFrame
+                } else {
                     // 加载失败，使用默认头像
                     cc.resources.load("UI/headimage/avatar_1", cc.SpriteFrame, function(err2, fallbackSprite) {
                         if (!err2 && fallbackSprite && sprite.isValid) {
                             sprite.spriteFrame = fallbackSprite
                         }
                     })
-                    return
-                }
-                if (sprite.isValid) {
-                    sprite.spriteFrame = spriteFrame
                 }
             })
+            return
         }
+        
+        // 没有头像URL，使用默认头像
+        var defaultIndex = isRobot ? (Math.floor(Math.random() * 3) + 1) : 1
+        var defaultPath = "UI/headimage/avatar_" + defaultIndex
+        cc.resources.load(defaultPath, cc.SpriteFrame, function(err, spriteFrame) {
+            if (!err && spriteFrame && sprite.isValid) {
+                sprite.spriteFrame = spriteFrame
+            }
+        })
+    },
+    
+    // ============================================================
+    // 🔧【托管】用户活动检测 - 触发取消托管
+    // ============================================================
+    
+    /**
+     * 🔧【托管】设置用户活动检测
+     * 当用户在屏幕上移动或点击时，触发取消托管请求
+     */
+    _setupUserActivityDetection: function() {
+        var self = this
+        
+        // 监听全局触摸开始事件
+        this.node.on(cc.Node.EventType.TOUCH_START, function(event) {
+            self._onUserActivity("touch_start")
+        }, this)
+        
+        // 监听全局触摸移动事件
+        this.node.on(cc.Node.EventType.TOUCH_MOVE, function(event) {
+            self._onUserActivity("touch_move")
+        }, this)
+        
+        // 监听全局鼠标移动事件（PC端）
+        this.node.on(cc.Node.EventType.MOUSE_MOVE, function(event) {
+            self._onUserActivity("mouse_move")
+        }, this)
+        
+        console.log("🖐️ [用户活动检测] 已启动")
+    },
+    
+    /**
+     * 🔧【托管】用户活动回调
+     * 节流处理，避免频繁发送请求
+     * 🔧【优化】只要用户在游戏中活动，就发送取消托管请求，让服务端判断是否需要取消
+     */
+    _onUserActivity: function(activityType) {
+        var now = Date.now()
+        
+        // 节流：1秒内只处理一次
+        if (now - this._lastUserActivityTime < this._userActivityThrottle) {
+            return
+        }
+        this._lastUserActivityTime = now
+        
+        // 检查是否处于游戏进行中
+        if (this._gamePhase !== "bidding" && this._gamePhase !== "playing") {
+            return
+        }
+        
+        var myglobal = window.myglobal
+        if (!myglobal || !myglobal.socket) {
+            return
+        }
+        
+        // 🔧【优化】不再检查本地托管状态，直接发送取消托管请求
+        // 服务端会自己判断玩家是否处于托管状态，如果是则取消托管
+        console.log("🖐️ [用户活动] 检测到用户活动:", activityType, "，发送取消托管请求")
+        
+        // 发送取消托管请求
+        if (myglobal.socket.cancelTrustee) {
+            myglobal.socket.cancelTrustee()
+        }
+    },
+    
+    /**
+     * 🔧【托管】检查当前玩家是否处于托管状态
+     * 注意：此方法已不再使用，保留仅供参考
+     */
+    _isCurrentPlayerTrustee: function() {
+        // 🔧【优化】直接检查本地托管状态
+        if (this._isLocalTrustee) {
+            return true
+        }
+        
+        var myglobal = window.myglobal
+        if (!myglobal || !myglobal.playerData) {
+            return false
+        }
+        
+        // 查找当前玩家的 player_node
+        var gameSceneNode = this.node.parent
+        if (!gameSceneNode) {
+            return false
+        }
+        
+        var myPlayerId = myglobal.socket.getPlayerInfo().id || 
+                         myglobal.playerData.serverPlayerId || 
+                         myglobal.playerData.accountID
+        
+        // 遍历 playerNodeList 查找当前玩家
+        var playerNodeList = gameSceneNode.getComponent("gameScene")
+        if (playerNodeList && playerNodeList.playerNodeList) {
+            for (var i = 0; i < playerNodeList.playerNodeList.length; i++) {
+                var node = playerNodeList.playerNodeList[i]
+                if (node) {
+                    var script = node.getComponent("player_node")
+                    if (script && String(script.accountid) === String(myPlayerId)) {
+                        return script._isTrustee || false
+                    }
+                }
+            }
+        }
+        
+        return false
     }
 });

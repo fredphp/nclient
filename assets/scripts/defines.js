@@ -10,6 +10,10 @@ defines.serverUrl = "wss://apis.hongxiu88.com/ws";
 // Go 后端 HTTP API 地址（生产环境）
 defines.apiUrl = "https://apis.hongxiu88.com";
 
+// CDN 地址（用于加载头像等静态资源）
+// 🔧【修复】使用与apiUrl相同的域名，因为静态文件由后端服务器提供
+defines.cdnUrl = "https://apis.hongxiu88.com";
+
 // API 数据加密密钥（与服务端配置一致，必须是32字节）
 defines.cryptoKey = "qqddz2026gameaes256secretkey123!";
 
