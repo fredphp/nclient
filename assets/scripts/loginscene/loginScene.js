@@ -1364,29 +1364,8 @@ cc.Class({
         mask.color = new cc.Color(0, 0, 0);
         mask.opacity = 150;
 
-        // 🔧 修复：点击遮罩层关闭弹窗
-        mask.on(cc.Node.EventType.TOUCH_END, function() {
-            console.log(">>> 点击遮罩层关闭弹窗");
-            // 重置标志位
-            self._phoneLoginPopupShowing = false;
-
-            // 清理原生 HTML input 元素
-            if (cc.sys.isBrowser) {
-                var container = document.getElementById('native-input-container');
-                if (container) {
-                    container.remove();
-                }
-            }
-            // 关闭动画
-            cc.tween(panel)
-                .to(0.15, { scale: 0.8, opacity: 0 }, { easing: 'backIn' })
-                .call(function() {
-                    if (cc.isValid(popup)) {
-                        popup.destroy();
-                    }
-                })
-                .start();
-        }, this);
+        // 注意：遮罩层只起遮挡作用，不响应点击关闭弹窗
+        // 只有点击关闭按钮才能关闭弹窗
 
         // ==================== 弹窗面板 ====================
         var panel = new cc.Node("Panel");

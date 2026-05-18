@@ -91,6 +91,41 @@ window.arenaData = function() {
             return;
         }
         
+        // 🔧【关键修复】等待认证完成后再发送请求
+        // 问题：登录后立即发送请求时，connected 消息可能还没处理完成
+        var waitForAuth = function(onReady) {
+            // 检查是否已认证
+            if (socketCtrInstance.isAuthenticated && socketCtrInstance.isAuthenticated()) {
+                console.log("🏟️ [ArenaData] WebSocket 已认证，可以发送请求");
+                onReady();
+                return;
+            }
+            
+            // 未认证，等待认证完成
+            console.log("🏟️ [ArenaData] WebSocket 未认证，等待认证完成...");
+            
+            var retryCount = 0;
+            var maxRetries = 20; // 最多等待 10 秒（每次 500ms）
+            var retryInterval = 500;
+            
+            var tryAuth = function() {
+                retryCount++;
+                if (socketCtrInstance.isAuthenticated && socketCtrInstance.isAuthenticated()) {
+                    console.log("🏟️ [ArenaData] WebSocket 认证完成，可以发送请求");
+                    onReady();
+                } else if (retryCount < maxRetries) {
+                    console.log("🏟️ [ArenaData] 等待认证... 重试次数:", retryCount);
+                    setTimeout(tryAuth, retryInterval);
+                } else {
+                    // 等待超时
+                    console.warn("🏟️ [ArenaData] 等待 WebSocket 认证超时");
+                    callback && callback('认证超时，请刷新页面重试', null);
+                }
+            };
+            
+            setTimeout(tryAuth, retryInterval);
+        };
+        
         // 🔧【关键修复】WebSocket 未连接时，自动等待连接完成后重试
         if (!socketCtrInstance.isConnected() || !socketCtrInstance.isWebSocketOpen()) {
             console.log("🏟️ [ArenaData] WebSocket 未连接，等待连接完成后重试...");
@@ -108,9 +143,11 @@ window.arenaData = function() {
                 var trySignup = function() {
                     retryCount++;
                     if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
-                        console.log("🏟️ [ArenaData] WebSocket 已连接，执行报名请求");
-                        // 连接成功，执行报名
-                        that._doSignup(socketCtrInstance, roomId, callback);
+                        console.log("🏟️ [ArenaData] WebSocket 已连接，等待认证完成");
+                        // 🔧【修复】连接成功后，还需要等待认证完成
+                        waitForAuth(function() {
+                            that._doSignup(socketCtrInstance, roomId, callback);
+                        });
                     } else if (retryCount < maxRetries) {
                         console.log("🏟️ [ArenaData] 等待连接... 重试次数:", retryCount);
                         setTimeout(trySignup, retryInterval);
@@ -137,8 +174,11 @@ window.arenaData = function() {
                 var trySignup = function() {
                     retryCount++;
                     if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
-                        console.log("🏟️ [ArenaData] WebSocket 已连接，执行报名请求");
-                        that._doSignup(socketCtrInstance, roomId, callback);
+                        console.log("🏟️ [ArenaData] WebSocket 已连接，等待认证完成");
+                        // 🔧【修复】连接成功后，还需要等待认证完成
+                        waitForAuth(function() {
+                            that._doSignup(socketCtrInstance, roomId, callback);
+                        });
                     } else if (retryCount < maxRetries) {
                         setTimeout(trySignup, retryInterval);
                     } else {
@@ -151,8 +191,10 @@ window.arenaData = function() {
             }
         }
         
-        // WebSocket 已连接，直接执行报名
-        that._doSignup(socketCtrInstance, roomId, callback);
+        // 🔧【修复】WebSocket 已连接，但需要等待认证完成
+        waitForAuth(function() {
+            that._doSignup(socketCtrInstance, roomId, callback);
+        });
     };
     
     /**

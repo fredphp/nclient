@@ -233,6 +233,7 @@ window.socketCtr = function(){
         // 处理服务端推送的消息
         switch(type){
             case MessageType.CONNECTED:
+                console.log("✅ [socket_ctr] 收到 connected 消息, player_id:", data.player_id, "player_name:", data.player_name)
                 _playerId = data.player_id
                 _playerName = data.player_name
                 _reconnectToken = data.reconnect_token
@@ -242,6 +243,7 @@ window.socketCtr = function(){
                     window.myglobal.playerData.serverPlayerId = data.player_id
                 }
                 _startHeartbeat()
+                console.log("✅ [socket_ctr] 连接认证成功, _playerId =", _playerId, "isAuthenticated =", that.isAuthenticated())
                 evt.fire("connection_success", data)
                 break
                 

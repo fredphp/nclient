@@ -48,6 +48,9 @@ cc.Class({
       this.node.on("gamestart_event", function(event) {
         this.readyimage.active = false
         if (this.masterIcon) this.masterIcon.active = false  // 🔧【修复】游戏开始时隐藏地主图标
+        // 🔧【修复】游戏重新开始时清理抢地主/不抢图标，避免重叠显示
+        if (this.robIcon_Sp) this.robIcon_Sp.active = false
+        if (this.robnoIcon_Sp) this.robnoIcon_Sp.active = false
         if (this.card_node) {
             this.card_node.active = false
             this.card_node.removeAllChildren(true)
@@ -101,6 +104,14 @@ cc.Class({
               // ⚠️【已删除】音效播放移至 gameingUI._playRobSound（服务端广播触发）
             }
           }
+      }.bind(this))
+
+      // 🔧【新增】清理抢地主/不抢图标事件（重新发牌时调用）
+      this.node.on("clear_rob_state_event", function() {
+          console.log("🔄 [player_node] 清理抢地主/不抢图标, accountid:", this.accountid)
+          if (this.robIcon_Sp) this.robIcon_Sp.active = false
+          if (this.robnoIcon_Sp) this.robnoIcon_Sp.active = false
+          if (this.qiangdidzhu_node) this.qiangdidzhu_node.active = false
       }.bind(this))
 
       // 成为地主事件
