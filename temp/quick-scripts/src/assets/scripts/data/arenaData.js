@@ -68,107 +68,380 @@ window.arenaData = function () {
     });
   };
   /**
-   * 报名竞技场
+   * 报名竞技场（使用 WebSocket 指令）
    * @param {Number} roomId - 竞技场房间ID
    * @param {Function} callback - 回调函数 (err, result)
    */
 
 
   that.signup = function (roomId, callback) {
-    var apiUrl = window.defines ? window.defines.apiUrl : '';
-    var cryptoKey = window.defines ? window.defines.cryptoKey : '';
-    var token = window.myglobal && window.myglobal.playerData ? window.myglobal.playerData.token : '';
+    // 🔧【修复】使用 myglobal.socket 获取已连接的实例，而不是每次创建新实例
+    var socketCtrInstance = window.myglobal && window.myglobal.socket ? window.myglobal.socket : null;
 
-    if (!apiUrl || !window.HttpAPI) {
-      callback && callback('API未配置', null);
+    if (!socketCtrInstance) {
+      callback && callback('WebSocket未初始化，请刷新页面重试', null);
       return;
-    }
+    } // 检查 WebSocket 连接状态
 
-    var requestData = {
-      room_id: roomId,
-      token: token
-    };
-    HttpAPI.post(apiUrl + '/api/v1/arena/signup', requestData, cryptoKey, function (err, result) {
-      if (err) {
-        callback && callback(err, null);
+
+    if (!socketCtrInstance.isConnected || typeof socketCtrInstance.isConnected !== 'function') {
+      console.error("🏟️ [ArenaData] socketCtr.isConnected 不是函数");
+      callback && callback('WebSocket连接状态异常，请刷新页面重试', null);
+      return;
+    } // 🔧【关键修复】等待认证完成后再发送请求
+    // 问题：登录后立即发送请求时，connected 消息可能还没处理完成
+
+
+    var waitForAuth = function waitForAuth(onReady) {
+      // 检查是否已认证
+      if (socketCtrInstance.isAuthenticated && socketCtrInstance.isAuthenticated()) {
+        console.log("🏟️ [ArenaData] WebSocket 已认证，可以发送请求");
+        onReady();
+        return;
+      } // 未认证，等待认证完成
+
+
+      console.log("🏟️ [ArenaData] WebSocket 未认证，等待认证完成...");
+      var retryCount = 0;
+      var maxRetries = 20; // 最多等待 10 秒（每次 500ms）
+
+      var retryInterval = 500;
+
+      var tryAuth = function tryAuth() {
+        retryCount++;
+
+        if (socketCtrInstance.isAuthenticated && socketCtrInstance.isAuthenticated()) {
+          console.log("🏟️ [ArenaData] WebSocket 认证完成，可以发送请求");
+          onReady();
+        } else if (retryCount < maxRetries) {
+          console.log("🏟️ [ArenaData] 等待认证... 重试次数:", retryCount);
+          setTimeout(tryAuth, retryInterval);
+        } else {
+          // 等待超时
+          console.warn("🏟️ [ArenaData] 等待 WebSocket 认证超时");
+          callback && callback('认证超时，请刷新页面重试', null);
+        }
+      };
+
+      setTimeout(tryAuth, retryInterval);
+    }; // 🔧【关键修复】WebSocket 未连接时，自动等待连接完成后重试
+
+
+    if (!socketCtrInstance.isConnected() || !socketCtrInstance.isWebSocketOpen()) {
+      console.log("🏟️ [ArenaData] WebSocket 未连接，等待连接完成后重试..."); // 检查是否正在连接中
+
+      var connectionState = socketCtrInstance.getConnectionState ? socketCtrInstance.getConnectionState() : "unknown";
+      console.log("🏟️ [ArenaData] 当前连接状态:", connectionState);
+
+      if (connectionState === "connecting") {
+        // 正在连接中，等待连接完成后自动重试
+        var retryCount = 0;
+        var maxRetries = 10; // 最多等待 5 秒（每次 500ms）
+
+        var retryInterval = 500;
+
+        var _trySignup2 = function trySignup() {
+          retryCount++;
+
+          if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
+            console.log("🏟️ [ArenaData] WebSocket 已连接，等待认证完成"); // 🔧【修复】连接成功后，还需要等待认证完成
+
+            waitForAuth(function () {
+              that._doSignup(socketCtrInstance, roomId, callback);
+            });
+          } else if (retryCount < maxRetries) {
+            console.log("🏟️ [ArenaData] 等待连接... 重试次数:", retryCount);
+            setTimeout(_trySignup2, retryInterval);
+          } else {
+            // 等待超时
+            console.warn("🏟️ [ArenaData] 等待 WebSocket 连接超时");
+            callback && callback('连接超时，请稍后重试', null);
+          }
+        };
+
+        setTimeout(_trySignup2, retryInterval);
+        return;
+      } else {
+        // 未在连接中，尝试初始化连接
+        console.log("🏟️ [ArenaData] WebSocket 未连接，尝试初始化连接...");
+
+        if (socketCtrInstance.initSocket) {
+          socketCtrInstance.initSocket();
+        } // 等待连接完成后重试
+
+
+        var retryCount = 0;
+        var maxRetries = 10;
+        var retryInterval = 500;
+
+        var _trySignup2 = function _trySignup() {
+          retryCount++;
+
+          if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
+            console.log("🏟️ [ArenaData] WebSocket 已连接，等待认证完成"); // 🔧【修复】连接成功后，还需要等待认证完成
+
+            waitForAuth(function () {
+              that._doSignup(socketCtrInstance, roomId, callback);
+            });
+          } else if (retryCount < maxRetries) {
+            setTimeout(_trySignup2, retryInterval);
+          } else {
+            callback && callback('连接超时，请稍后重试', null);
+          }
+        };
+
+        setTimeout(_trySignup2, retryInterval);
         return;
       }
+    } // 🔧【修复】WebSocket 已连接，但需要等待认证完成
 
-      if (result && (result.code === 0 || result.success)) {
-        var _result$data;
 
-        // 记录报名成功
-        var arenaConfig = that._arenaDetails[roomId] || {};
-        that._signedUpArenas[roomId] = {
-          signupTime: Date.now(),
-          status: 'signed_up',
-          countdownEnd: result.data ? result.data.start_time : null,
-          arenaConfig: arenaConfig,
-          periodNo: result.period_no || ((_result$data = result.data) == null ? void 0 : _result$data.period_no)
-        }; // 🔧【新增】保存到本地存储
-
-        that.saveToLocal(); // 通知状态变更
-
-        that._notifyStatusChange(roomId, 'signed_up');
-
-        callback && callback(null, {
-          success: true,
-          message: result.message || '报名成功',
-          start_time: result.data ? result.data.start_time : null
-        });
-      } else {
-        callback && callback(result ? result.message : '报名失败', null);
-      }
+    waitForAuth(function () {
+      that._doSignup(socketCtrInstance, roomId, callback);
     });
   };
   /**
-   * 取消报名
+   * 执行报名请求（内部方法）
+   * @param {Object} socketCtrInstance - WebSocket 实例
+   * @param {Number} roomId - 竞技场房间ID
+   * @param {Function} callback - 回调函数
+   */
+
+
+  that._doSignup = function (socketCtrInstance, roomId, callback) {
+    console.log("🏟️ [ArenaData] 通过 WebSocket 发送报名请求, roomId:", roomId); // 标记是否已响应（防止重复回调）
+
+    var responded = false;
+    var timeoutId = null; // 清理函数（移除监听器和超时）
+
+    var cleanup = function cleanup() {
+      if (timeoutId) clearTimeout(timeoutId); // 移除监听器，防止内存泄漏
+
+      socketCtrInstance.offArenaSignupSuccess(successHandler);
+      socketCtrInstance.offArenaSignupFailed(failedHandler);
+    }; // 成功回调
+
+
+    var successHandler = function successHandler(data) {
+      if (responded) return;
+      if (data.room_id !== roomId) return; // 不是当前房间的响应
+
+      responded = true;
+      cleanup(); // 记录报名成功
+
+      var arenaConfig = that._arenaDetails[roomId] || {};
+      that._signedUpArenas[roomId] = {
+        signupTime: data.signup_time || Date.now(),
+        status: 'signed_up',
+        arenaConfig: arenaConfig,
+        periodNo: data.period_no,
+        signupFee: data.signup_fee
+      }; // 保存到本地存储
+
+      that.saveToLocal(); // 更新玩家竞技币余额
+
+      if (window.myglobal && window.myglobal.playerData && data.balance_after !== undefined) {
+        window.myglobal.playerData.arena_coin = data.balance_after;
+        window.myglobal.playerData.saveToLocal(); // 🔧【新增】触发全局事件，通知大厅刷新UI
+
+        if (window.myglobal.eventlister) {
+          window.myglobal.eventlister.fire('arena_coin_updated', {
+            arena_coin: data.balance_after
+          });
+        }
+      } // 通知状态变更
+
+
+      that._notifyStatusChange(roomId, 'signed_up');
+
+      callback && callback(null, {
+        success: true,
+        message: '报名成功',
+        period_no: data.period_no,
+        signup_fee: data.signup_fee,
+        balance_after: data.balance_after
+      });
+    }; // 失败回调
+
+
+    var failedHandler = function failedHandler(data) {
+      if (responded) return;
+      responded = true;
+      cleanup();
+      callback && callback(data.message || '报名失败', null);
+    }; // 注册监听
+
+
+    socketCtrInstance.onArenaSignupSuccess(successHandler);
+    socketCtrInstance.onArenaSignupFailed(failedHandler); // 设置超时（10秒）
+
+    timeoutId = setTimeout(function () {
+      if (responded) return;
+      responded = true;
+      callback && callback('报名请求超时，请重试', null);
+    }, 10000); // 发送报名请求
+
+    socketCtrInstance.sendArenaSignup({
+      room_id: roomId
+    });
+  };
+  /**
+   * 取消报名（使用 WebSocket 指令）
    * @param {Number} roomId - 竞技场房间ID
    * @param {Function} callback - 回调函数 (err, result)
    */
 
 
   that.cancelSignup = function (roomId, callback) {
-    var apiUrl = window.defines ? window.defines.apiUrl : '';
-    var cryptoKey = window.defines ? window.defines.cryptoKey : '';
-    var token = window.myglobal && window.myglobal.playerData ? window.myglobal.playerData.token : '';
+    // 🔧【修复】使用 myglobal.socket 获取已连接的实例，而不是每次创建新实例
+    var socketCtrInstance = window.myglobal && window.myglobal.socket ? window.myglobal.socket : null;
 
-    if (!apiUrl || !window.HttpAPI) {
-      callback && callback('API未配置', null);
+    if (!socketCtrInstance) {
+      callback && callback('WebSocket未初始化，请刷新页面重试', null);
       return;
-    }
+    } // 检查 WebSocket 连接状态
 
-    var requestData = {
-      room_id: roomId,
-      token: token
-    };
-    HttpAPI.post(apiUrl + '/api/v1/arena/cancel', requestData, cryptoKey, function (err, result) {
-      if (err) {
-        callback && callback(err, null);
+
+    if (!socketCtrInstance.isConnected || typeof socketCtrInstance.isConnected !== 'function') {
+      console.error("🏟️ [ArenaData] socketCtr.isConnected 不是函数");
+      callback && callback('WebSocket连接状态异常，请刷新页面重试', null);
+      return;
+    } // 🔧【关键修复】WebSocket 未连接时，自动等待连接完成后重试
+
+
+    if (!socketCtrInstance.isConnected() || !socketCtrInstance.isWebSocketOpen()) {
+      console.log("🏟️ [ArenaData] WebSocket 未连接，等待连接完成后重试...");
+      var connectionState = socketCtrInstance.getConnectionState ? socketCtrInstance.getConnectionState() : "unknown";
+
+      if (connectionState === "connecting") {
+        var retryCount = 0;
+        var maxRetries = 10;
+        var retryInterval = 500;
+
+        var _tryCancel2 = function tryCancel() {
+          retryCount++;
+
+          if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
+            that._doCancelSignup(socketCtrInstance, roomId, callback);
+          } else if (retryCount < maxRetries) {
+            setTimeout(_tryCancel2, retryInterval);
+          } else {
+            callback && callback('连接超时，请稍后重试', null);
+          }
+        };
+
+        setTimeout(_tryCancel2, retryInterval);
+        return;
+      } else {
+        if (socketCtrInstance.initSocket) {
+          socketCtrInstance.initSocket();
+        }
+
+        var retryCount = 0;
+        var maxRetries = 10;
+        var retryInterval = 500;
+
+        var _tryCancel2 = function _tryCancel() {
+          retryCount++;
+
+          if (socketCtrInstance.isConnected() && socketCtrInstance.isWebSocketOpen()) {
+            that._doCancelSignup(socketCtrInstance, roomId, callback);
+          } else if (retryCount < maxRetries) {
+            setTimeout(_tryCancel2, retryInterval);
+          } else {
+            callback && callback('连接超时，请稍后重试', null);
+          }
+        };
+
+        setTimeout(_tryCancel2, retryInterval);
         return;
       }
-
-      if (result && (result.code === 0 || result.success)) {
-        // 清除报名记录
-        delete that._signedUpArenas[roomId]; // 🔧【新增】保存到本地存储
-
-        that.saveToLocal(); // 清除倒计时定时器
-
-        if (that._countdownTimers[roomId]) {
-          clearInterval(that._countdownTimers[roomId]);
-          delete that._countdownTimers[roomId];
-        } // 通知状态变更
+    } // WebSocket 已连接，直接执行
 
 
-        that._notifyStatusChange(roomId, 'cancelled');
+    that._doCancelSignup(socketCtrInstance, roomId, callback);
+  };
+  /**
+   * 执行取消报名请求（内部方法）
+   * @param {Object} socketCtrInstance - WebSocket 实例
+   * @param {Number} roomId - 竞技场房间ID
+   * @param {Function} callback - 回调函数
+   */
 
-        callback && callback(null, {
-          success: true,
-          message: '取消报名成功'
-        });
-      } else {
-        callback && callback(result ? result.message : '取消报名失败', null);
-      }
+
+  that._doCancelSignup = function (socketCtrInstance, roomId, callback) {
+    console.log("🏟️ [ArenaData] 通过 WebSocket 发送取消报名请求, roomId:", roomId); // 标记是否已响应（防止重复回调）
+
+    var responded = false;
+    var timeoutId = null; // 清理函数（移除监听器和超时）
+
+    var cleanup = function cleanup() {
+      if (timeoutId) clearTimeout(timeoutId); // 移除监听器，防止内存泄漏
+
+      socketCtrInstance.offArenaCancelSuccess(successHandler);
+      socketCtrInstance.offArenaCancelFailed(failedHandler);
+    }; // 成功回调
+
+
+    var successHandler = function successHandler(data) {
+      if (responded) return;
+      if (data.room_id !== roomId) return; // 不是当前房间的响应
+
+      responded = true;
+      cleanup(); // 清除报名记录
+
+      delete that._signedUpArenas[roomId]; // 保存到本地存储
+
+      that.saveToLocal(); // 更新玩家竞技币余额
+
+      if (window.myglobal && window.myglobal.playerData && data.balance_after !== undefined) {
+        window.myglobal.playerData.arena_coin = data.balance_after;
+        window.myglobal.playerData.saveToLocal(); // 🔧【新增】触发全局事件，通知大厅刷新UI
+
+        if (window.myglobal.eventlister) {
+          window.myglobal.eventlister.fire('arena_coin_updated', {
+            arena_coin: data.balance_after
+          });
+        }
+      } // 清除倒计时定时器
+
+
+      if (that._countdownTimers[roomId]) {
+        clearInterval(that._countdownTimers[roomId]);
+        delete that._countdownTimers[roomId];
+      } // 通知状态变更
+
+
+      that._notifyStatusChange(roomId, 'cancelled');
+
+      callback && callback(null, {
+        success: true,
+        message: '取消报名成功',
+        refund_amount: data.refund_amount,
+        balance_after: data.balance_after
+      });
+    }; // 失败回调
+
+
+    var failedHandler = function failedHandler(data) {
+      if (responded) return;
+      responded = true;
+      cleanup();
+      callback && callback(data.message || '取消报名失败', null);
+    }; // 注册监听
+
+
+    socketCtrInstance.onArenaCancelSuccess(successHandler);
+    socketCtrInstance.onArenaCancelFailed(failedHandler); // 设置超时（10秒）
+
+    timeoutId = setTimeout(function () {
+      if (responded) return;
+      responded = true;
+      callback && callback('取消报名请求超时，请重试', null);
+    }, 10000); // 发送取消报名请求
+
+    socketCtrInstance.sendArenaCancelSignup({
+      room_id: roomId
     });
   };
   /**

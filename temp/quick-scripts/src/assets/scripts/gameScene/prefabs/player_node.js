@@ -55,6 +55,10 @@ cc.Class({
     this.node.on("gamestart_event", function (event) {
       this.readyimage.active = false;
       if (this.masterIcon) this.masterIcon.active = false; // 🔧【修复】游戏开始时隐藏地主图标
+      // 🔧【修复】游戏重新开始时清理抢地主/不抢图标，避免重叠显示
+
+      if (this.robIcon_Sp) this.robIcon_Sp.active = false;
+      if (this.robnoIcon_Sp) this.robnoIcon_Sp.active = false;
 
       if (this.card_node) {
         this.card_node.active = false;
@@ -105,6 +109,13 @@ cc.Class({
           this.robnoIcon_Sp.active = true; // ⚠️【已删除】音效播放移至 gameingUI._playRobSound（服务端广播触发）
         }
       }
+    }.bind(this)); // 🔧【新增】清理抢地主/不抢图标事件（重新发牌时调用）
+
+    this.node.on("clear_rob_state_event", function () {
+      console.log("🔄 [player_node] 清理抢地主/不抢图标, accountid:", this.accountid);
+      if (this.robIcon_Sp) this.robIcon_Sp.active = false;
+      if (this.robnoIcon_Sp) this.robnoIcon_Sp.active = false;
+      if (this.qiangdidzhu_node) this.qiangdidzhu_node.active = false;
     }.bind(this)); // 成为地主事件
 
     this.node.on("playernode_changemaster_event", function (event) {
@@ -170,9 +181,12 @@ cc.Class({
     return String(myPlayerId || "");
   },
   init_data: function init_data(data, index) {
-    var myglobal = window.myglobal;
-    this.accountid = data.accountid;
-    this.seat_index = index; // 同步玩家ID
+    var myglobal = window.myglobal; // 🔧【修复】兼容 accountid 和 accountId 两种命名
+
+    this.accountid = data.accountid || data.accountId || "";
+    this.seat_index = index; // 🔧【调试】输出 accountid 设置
+
+    console.log("🎮 [player_node.init_data] accountid:", this.accountid, "seat_index:", this.seat_index, "nick_name:", data.nick_name); // 同步玩家ID
 
     if (myglobal && myglobal.playerData && !myglobal.playerData.serverPlayerId) {
       if (myglobal.socket && myglobal.socket.getPlayerInfo) {
@@ -184,7 +198,15 @@ cc.Class({
       }
     }
 
-    this.account_label.node.active = false;
+    this.account_label.node.active = false; // 🔧【修复】设置昵称标签溢出模式：超长名字用省略号显示
+
+    if (this.nickname_label) {
+      this.nickname_label.overflow = cc.Label.Overflow.CLAMP;
+      this.nickname_label.enableEllipsis = true; // 设置最大宽度（根据UI设计调整）
+
+      this.nickname_label.node.width = 100;
+    }
+
     this.nickname_label.string = data.nick_name || "玩家" + (index + 1); // 🔧【修复】区分普通场和竞技场的金币显示
     // 竞技场模式下显示 arena_gold（当期赛事金币），普通场显示 gold_count（欢乐豆）
 
@@ -287,11 +309,14 @@ cc.Class({
         this.masterIcon.y = 5;
       }
     } // 设置层级
+    // 🔧【修复】headimage（头像）应该在 room_touxiang（头像框）的上层
 
 
     if (this.room_touxiang && this.headimage) {
-      this.headimage.node.zIndex = 0;
-      this.room_touxiang.node.zIndex = 100;
+      this.room_touxiang.node.zIndex = 0; // 头像框在底层
+
+      this.headimage.node.zIndex = 100; // 头像在上层显示
+
       this.headimage.node.parent.sortAllChildren();
     } // 🔧【修复】加载头像 - 支持远程URL和本地资源
     // 服务端可能返回 avatar, avatarUrl, 或 avatarurl 字段
@@ -371,37 +396,41 @@ cc.Class({
       this._loadDefaultAvatar();
 
       return;
+    } // 🔧【优化】优先使用预加载的缓存头像
+
+
+    var myglobal = window.myglobal;
+
+    if (myglobal && myglobal._avatarCache && myglobal._avatarCache[avatarUrl]) {
+      var cachedSpriteFrame = myglobal._avatarCache[avatarUrl];
+
+      if (cachedSpriteFrame) {
+        console.log("🖼️ [player_node] 使用缓存头像:", avatarUrl);
+
+        self._setAvatarSprite(cachedSpriteFrame);
+
+        return;
+      }
+    } // 🔧【修复】处理以 / 开头的路径（服务器相对路径）
+
+
+    if (avatarUrl.indexOf('/') === 0 && avatarUrl.indexOf('/uploads/') === 0) {
+      // 拼接服务器地址
+      var cdnUrl = myglobal && myglobal.cdnUrl ? myglobal.cdnUrl : "https://apis.hongxiu88.com";
+      var serverUrl = cdnUrl + avatarUrl;
+      console.log("🖼️ [player_node] 加载服务器头像(格式1):", serverUrl);
+
+      this._loadRemoteAvatar(serverUrl);
+
+      return;
     } // 判断是否是远程URL
 
 
     if (avatarUrl.indexOf('http://') === 0 || avatarUrl.indexOf('https://') === 0) {
       // 远程URL头像
       console.log("🖼️ [player_node] 加载远程头像:", avatarUrl);
-      cc.assetManager.loadRemote(avatarUrl, {
-        ext: '.png'
-      }, function (err, texture) {
-        if (err || !texture) {
-          console.warn("🖼️ [player_node] 远程头像加载失败，使用默认头像:", err);
 
-          self._loadDefaultAvatar();
-
-          return;
-        }
-
-        try {
-          var spriteFrame = new cc.SpriteFrame(texture);
-
-          if (spriteFrame) {
-            self._setAvatarSprite(spriteFrame);
-
-            console.log("🖼️ [player_node] 远程头像加载成功");
-          }
-        } catch (e) {
-          console.warn("🖼️ [player_node] 创建SpriteFrame失败:", e);
-
-          self._loadDefaultAvatar();
-        }
-      });
+      this._loadRemoteAvatar(avatarUrl);
     } else {
       // 本地资源头像
       console.log("🖼️ [player_node] 加载本地头像:", avatarUrl);
@@ -423,6 +452,47 @@ cc.Class({
   },
 
   /**
+   * 🔧【新增】加载远程头像
+   * @param {string} url - 完整的远程URL
+   */
+  _loadRemoteAvatar: function _loadRemoteAvatar(url) {
+    var self = this; // 🔧【修复】根据URL确定正确的扩展名，避免加载失败
+
+    var ext = '.png'; // 默认扩展名
+
+    if (url.indexOf('.jpg') > 0 || url.indexOf('.jpeg') > 0) {
+      ext = '.jpg';
+    } else if (url.indexOf('.png') > 0) {
+      ext = '.png';
+    }
+
+    console.log("🖼️ [player_node] 开始加载远程头像:", url, "扩展名:", ext);
+    cc.assetManager.loadRemote(url, function (err, texture) {
+      if (err || !texture) {
+        console.warn("🖼️ [player_node] 远程头像加载失败，使用默认头像:", err);
+
+        self._loadDefaultAvatar();
+
+        return;
+      }
+
+      try {
+        var spriteFrame = new cc.SpriteFrame(texture);
+
+        if (spriteFrame) {
+          self._setAvatarSprite(spriteFrame);
+
+          console.log("🖼️ [player_node] 远程头像加载成功:", url);
+        }
+      } catch (e) {
+        console.warn("🖼️ [player_node] 创建SpriteFrame失败:", e);
+
+        self._loadDefaultAvatar();
+      }
+    });
+  },
+
+  /**
    * 🔧【新增】加载默认头像
    */
   _loadDefaultAvatar: function _loadDefaultAvatar() {
@@ -432,6 +502,49 @@ cc.Class({
         self._setAvatarSprite(spriteFrame);
       }
     });
+  },
+
+  /**
+   * 🔧【新增】更新竞技场玩家数据（头像、金币等）
+   * 当收到 ROOM_JOINED 消息后调用，更新从服务端获取的正确数据
+   * @param {Object} data - 包含 gold_count, arena_gold, match_coin, avatar, avatarUrl
+   */
+  updateArenaData: function updateArenaData(data) {
+    console.log("🏟️ [player_node] updateArenaData 被调用, accountid:", this.accountid, "data:", JSON.stringify(data)); // 🔧【修复】竞技场模式优先使用 match_coin，其次 arena_gold
+
+    var displayValue = 0;
+
+    if (data.match_coin !== undefined && data.match_coin !== null && data.match_coin > 0) {
+      displayValue = data.match_coin;
+      console.log("🏟️ [player_node] 更新 match_coin:", data.match_coin);
+    } else if (data.arena_gold !== undefined && data.arena_gold !== null && data.arena_gold > 0) {
+      displayValue = data.arena_gold;
+      console.log("🏟️ [player_node] 更新 arena_gold:", data.arena_gold);
+    } else if (data.gold_count !== undefined && data.gold_count !== null && data.gold_count > 0) {
+      displayValue = data.gold_count;
+      console.log("🏟️ [player_node] 更新 gold_count:", data.gold_count);
+    } // 🔧【关键修复】使用正确的 globalcount_label 而非 gold_label
+
+
+    if (displayValue > 0 && this.globalcount_label) {
+      this.globalcount_label.string = displayValue.toString();
+      this._arenaGold = displayValue; // 更新保存的赛事金币
+
+      console.log("🏟️ [player_node] 金币已更新为:", displayValue);
+    } else if (displayValue === 0) {
+      console.log("🏟️ [player_node] 警告：displayValue 为 0，跳过更新");
+    } else if (!this.globalcount_label) {
+      console.warn("🏟️ [player_node] 错误：globalcount_label 未绑定！");
+    } // 更新头像
+
+
+    var avatarUrl = data.avatar || data.avatarUrl;
+
+    if (avatarUrl && avatarUrl !== "" && avatarUrl !== "avatar_1") {
+      console.log("🏟️ [player_node] 更新头像:", avatarUrl);
+
+      this._loadAvatar(avatarUrl);
+    }
   },
   // ============================================================
   // 【核心】直接显示牌背（无动画，保证数据正确性）
@@ -543,7 +656,11 @@ cc.Class({
     // 只处理当前玩家的托管状态
     if (data.player_id !== this.accountid) {
       return;
-    }
+    } // 更新托管状态变量
+
+
+    this._isTrustee = data.is_trustee || false;
+    console.log("🔄 [player_node] 托管状态更新:", data.player_name, "is_trustee:", this._isTrustee, "reason:", data.reason);
 
     if (data.is_trustee) {
       // 开启托管状态

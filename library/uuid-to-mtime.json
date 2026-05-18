@@ -500,1418 +500,1453 @@
     "relativePath": "model/primitives.fbx"
   },
   "a1b2c3d4-e5f6-7890-abcd-ef1234567960": {
-    "asset": 1778755028037,
-    "meta": 1778755792475,
+    "asset": 1779077015821,
+    "meta": 1779077038385,
     "relativePath": "resources"
   },
   "a1b2c3d4-e5f6-7890-abcd-ef1234567950": {
-    "asset": 1778755028038,
-    "meta": 1778755792475,
+    "asset": 1779077015822,
+    "meta": 1779077038385,
     "relativePath": "scenes"
   },
   "a1b2c3d4-e5f6-7890-abcd-ef1234567890": {
-    "asset": 1778760156959,
-    "meta": 1778771746102,
+    "asset": 1779077015831,
+    "meta": 1779077038385,
     "relativePath": "scripts"
   },
   "2ab1d813-9530-4109-b681-27634fbfceaf": {
-    "asset": 1778755027945,
-    "meta": 1778755792476,
+    "asset": 1779077015784,
+    "meta": 1779077038385,
     "relativePath": "resources/UI"
   },
   "6d7a950f-5478-42a4-b8a6-249043bfea9a": {
-    "asset": 1778755027951,
-    "meta": 1778755792476,
+    "asset": 1779077015786,
+    "meta": 1779077038386,
     "relativePath": "resources/font"
   },
   "7d14a937-a2ba-4bfa-bae3-226e85993847": {
-    "asset": 1778755027954,
-    "meta": 1778755792477,
+    "asset": 1779077015787,
+    "meta": 1779077038386,
     "relativePath": "resources/images"
   },
   "106454fe-7c53-4304-9a62-3f44cb220c84": {
-    "asset": 1778755027972,
-    "meta": 1778755792480,
+    "asset": 1779077015791,
+    "meta": 1779077038390,
     "relativePath": "resources/prefabs"
   },
   "51ce1f91-376b-4a92-942b-4291568c3f61": {
-    "asset": 1778755028035,
-    "meta": 1778755792480,
+    "asset": 1779077015820,
+    "meta": 1779077038390,
     "relativePath": "resources/sound"
   },
   "b168ab65-7b5b-49a7-a82d-0fd5c0d1da93": {
-    "asset": 1778755027964,
-    "meta": 1778755795124,
+    "asset": 1779077015790,
+    "meta": 1779077040665,
     "relativePath": "resources/main_scene.plist"
   },
   "33244764-193c-419a-aa43-a687a90a069d": {
-    "asset": 1778755027952,
-    "meta": 1778755792488,
+    "asset": 1779077015786,
+    "meta": 1779077038408,
     "relativePath": "resources/hall_logo_pic.png"
   },
   "b1b2c3d4-e5f6-7890-abcd-ef1234567900": {
-    "asset": 1778771733192,
-    "meta": 1778771746102,
+    "asset": 1779077015822,
+    "meta": 1779077038424,
     "relativePath": "scripts/data"
   },
   "d907cdef-2a06-4f40-a5a2-5e41dbf09f2b": {
-    "asset": 1778755028041,
-    "meta": 1778755792501,
+    "asset": 1779077015823,
+    "meta": 1779077038425,
     "relativePath": "scripts/ddz"
   },
   "07c384bc-9a23-4b07-a9ba-9c9387d19e16": {
-    "asset": 1778755027961,
-    "meta": 1778755792494,
+    "asset": 1779077015789,
+    "meta": 1779077038411,
     "relativePath": "resources/logo_dengdai.png"
   },
   "a3b4c5d6-e7f8-9012-abcd-ef1234567892": {
-    "asset": 1778755028042,
-    "meta": 1778755792501,
+    "asset": 1779077015824,
+    "meta": 1779077038425,
     "relativePath": "scripts/defines.js"
   },
   "e1b2c3d4-e5f6-7890-abcd-ef1234567930": {
-    "asset": 1778760156957,
-    "meta": 1778771746102,
+    "asset": 1779077015825,
+    "meta": 1779077038425,
     "relativePath": "scripts/gameScene"
   },
   "523e0cb4-1010-4593-81a3-a6a00585706f": {
-    "asset": 1778755028035,
-    "meta": 1778755792496,
+    "asset": 1779077015820,
+    "meta": 1779077038418,
     "relativePath": "resources/table_bg_1.jpg"
   },
   "d1b2c3d4-e5f6-7890-abcd-ef1234567920": {
-    "asset": 1778771733193,
-    "meta": 1778771746102,
+    "asset": 1779077015828,
+    "meta": 1779077038426,
     "relativePath": "scripts/hallscene"
   },
   "f2b3c4d5-e6f7-8901-abcd-ef1234567941": {
-    "asset": 1778755028050,
-    "meta": 1778755792501,
+    "asset": 1779077015829,
+    "meta": 1779077038428,
     "relativePath": "scripts/lib"
   },
   "c40482c9-49ab-4782-b37c-409c41d11f78": {
-    "asset": 1778755027947,
-    "meta": 1778755792497,
+    "asset": 1779077015785,
+    "meta": 1779077038410,
     "relativePath": "resources/bg_login.jpg"
   },
   "c1b2c3d4-e5f6-7890-abcd-ef1234567910": {
-    "asset": 1778755028051,
-    "meta": 1778755792502,
+    "asset": 1779077015829,
+    "meta": 1779077038429,
     "relativePath": "scripts/loginscene"
   },
   "0e8b2659-8062-4e2c-8b2c-395f967d3c47": {
-    "asset": 1778755027960,
-    "meta": 1778755792500,
+    "asset": 1779077015789,
+    "meta": 1779077038424,
     "relativePath": "resources/loading_bg.png"
   },
   "f3b4c5d6-e7f8-9012-abcd-ef1234567942": {
-    "asset": 1778760156959,
-    "meta": 1778771746103,
+    "asset": 1779077015830,
+    "meta": 1779077038429,
     "relativePath": "scripts/prefabs"
   },
   "f1b2c3d4-e5f6-7890-abcd-ef1234567940": {
-    "asset": 1778760156959,
-    "meta": 1778771746103,
+    "asset": 1779077015831,
+    "meta": 1779077038429,
     "relativePath": "scripts/util"
   },
   "a4b5c6d7-e8f9-0123-abcd-ef1234567953": {
-    "asset": 1778755028037,
-    "meta": 1778755792509,
+    "asset": 1779077015821,
+    "meta": 1779077038427,
     "relativePath": "scenes/gameScene.fire"
   },
   "a3b4c5d6-e7f8-9012-abcd-ef1234567952": {
-    "asset": 1778755028038,
-    "meta": 1778755792510,
+    "asset": 1779077015821,
+    "meta": 1779077038429,
     "relativePath": "scenes/hallScene.fire"
   },
   "347f62d6-8f34-42dc-981d-a0459890e888": {
-    "asset": 1778755028038,
-    "meta": 1778755792511,
+    "asset": 1779083490814,
+    "meta": 1779083490817,
     "relativePath": "scenes/loginScene.fire"
   },
   "9cdaa3e3-b0d8-443e-b50d-865ba3d41416": {
-    "asset": 1778755027963,
-    "meta": 1778755792508,
+    "asset": 1779077015790,
+    "meta": 1779077038425,
     "relativePath": "resources/mahjong_table.jpg"
   },
   "c00adf3b-60e7-47be-9c66-3c8bd6f56157": {
-    "asset": 1778755027946,
-    "meta": 1778755792520,
+    "asset": 1779077015784,
+    "meta": 1779077038444,
     "relativePath": "resources/bg2.png"
   },
   "91dcb225-d4dc-4c02-ac52-a49f7897f033": {
-    "asset": 1778755027955,
-    "meta": 1778755792521,
+    "asset": 1779077015788,
+    "meta": 1779077038444,
     "relativePath": "resources/join_bk.png"
   },
   "3809ce92-3b44-48b9-a72c-a796865807c9": {
-    "asset": 1778755027950,
-    "meta": 1778755792522,
+    "asset": 1779077015785,
+    "meta": 1779077038446,
     "relativePath": "resources/creatroom_bg.png"
   },
   "7442c723-832a-41ff-bbac-e554b3053093": {
-    "asset": 1778755028036,
-    "meta": 1778755792523,
+    "asset": 1779077015821,
+    "meta": 1779077038439,
     "relativePath": "resources/table_bg_2.jpg"
   },
   "411884e8-fb38-4089-b327-bc644f1948df": {
-    "asset": 1778755027880,
-    "meta": 1778755792529,
+    "asset": 1779077015765,
+    "meta": 1779077038451,
     "relativePath": "resources/UI/btn_enter_room.png"
   },
   "80ae8cf7-c2e1-40f7-a96b-3c9b7f101f97": {
-    "asset": 1778755027879,
-    "meta": 1778755792529,
+    "asset": 1779077015765,
+    "meta": 1779077038456,
     "relativePath": "resources/UI/btn_create_room.png"
   },
   "21ffd0ae-5830-4472-9a77-f3bb9649a0c6": {
-    "asset": 1778755027877,
-    "meta": 1778755792533,
+    "asset": 1779077015765,
+    "meta": 1779077038455,
     "relativePath": "resources/UI/bt_start_0.png"
   },
   "d3e16fbd-0426-4ff8-83bc-f4681e084bd9": {
-    "asset": 1778755027878,
-    "meta": 1778755792534,
+    "asset": 1779077015765,
+    "meta": 1779077038448,
     "relativePath": "resources/UI/btn_ traveler.png"
   },
   "cfe696a4-eac1-4343-ac74-b824d2762c50": {
-    "asset": 1778755027918,
-    "meta": 1778755792546,
+    "asset": 1779077015773,
+    "meta": 1779077038464,
     "relativePath": "resources/UI/button"
   },
   "d59eded9-acfa-4ad9-92f8-5b7d065affc6": {
-    "asset": 1778755027922,
-    "meta": 1778755792547,
+    "asset": 1779077015774,
+    "meta": 1779077038464,
     "relativePath": "resources/UI/card"
   },
   "179cdda7-9831-4e8a-8332-e273a508c3da": {
-    "asset": 1778755027881,
-    "meta": 1778755792535,
+    "asset": 1779077015765,
+    "meta": 1779077038454,
     "relativePath": "resources/UI/btn_happy_2.png"
   },
   "0d2c27c5-cddf-4e78-ad1b-f3c8ddf164b5": {
-    "asset": 1778755027884,
-    "meta": 1778755792544,
+    "asset": 1779077015766,
+    "meta": 1779077038471,
     "relativePath": "resources/UI/btn_happy_5.png"
   },
   "907f576c-5eff-48a7-8943-19b3795e4f18": {
-    "asset": 1778755027882,
-    "meta": 1778755792545,
+    "asset": 1779077015766,
+    "meta": 1779077038456,
     "relativePath": "resources/UI/btn_happy_3.png"
   },
   "bce10091-1697-46b6-b03d-59ce479a37ac": {
-    "asset": 1778755027885,
-    "meta": 1778755792546,
+    "asset": 1779077015766,
+    "meta": 1779077038468,
     "relativePath": "resources/UI/btn_happy_6.png"
   },
   "8a8263be-e6f2-4a67-9be1-becddc2787f2": {
-    "asset": 1778755027970,
-    "meta": 1778755792550,
+    "asset": 1779077015790,
+    "meta": 1779077038420,
     "relativePath": "resources/main_scene.png"
   },
   "bd1ce7a4-1f72-43d6-83e4-a19454da308a": {
-    "asset": 1778755027929,
-    "meta": 1778755792558,
+    "asset": 1779077015776,
+    "meta": 1779077038473,
     "relativePath": "resources/UI/headimage"
   },
   "cda3c727-f71a-4e7a-9d46-d7567304229c": {
-    "asset": 1778755027890,
-    "meta": 1778755792552,
+    "asset": 1779077015768,
+    "meta": 1779077038466,
     "relativePath": "resources/UI/btn_return_room.png"
   },
   "c52714a1-04fc-4fbe-83f1-186674b27f01": {
-    "asset": 1778755027883,
-    "meta": 1778755792552,
+    "asset": 1779077015766,
+    "meta": 1779077038464,
     "relativePath": "resources/UI/btn_happy_4.png"
   },
   "de38c825-0d2d-47d2-b3ad-7c1ad1c906c0": {
-    "asset": 1778755027901,
-    "meta": 1778755792553,
+    "asset": 1779077015769,
+    "meta": 1779077038472,
     "relativePath": "resources/UI/btn_weixin.png"
   },
   "bbaca27a-c637-4fb5-83c6-512b14d84225": {
-    "asset": 1778755027902,
-    "meta": 1778755792558,
+    "asset": 1779077015769,
+    "meta": 1779077038473,
     "relativePath": "resources/UI/btnchange.png"
   },
   "77d50a63-2b6b-47a4-b952-419acf9fee97": {
-    "asset": 1778755027903,
-    "meta": 1778755792559,
+    "asset": 1779077015769,
+    "meta": 1779077038475,
     "relativePath": "resources/UI/btnready.png"
   },
   "f19c8527-3dd6-4dad-9d03-8b34a41c1b13": {
-    "asset": 1778755027923,
-    "meta": 1778755792560,
+    "asset": 1779077015774,
+    "meta": 1779077038482,
     "relativePath": "resources/UI/check_mark.png"
   },
   "34625300-5112-4c68-b3e5-1e569f81b840": {
-    "asset": 1778755027923,
-    "meta": 1778755792562,
+    "asset": 1779077015774,
+    "meta": 1779077038481,
     "relativePath": "resources/UI/fangzhu.png"
   },
   "c59d53f7-1f59-4bf4-9a32-acb34b7d0c9f": {
-    "asset": 1778755027925,
-    "meta": 1778755792564,
+    "asset": 1779077015774,
+    "meta": 1779077038485,
     "relativePath": "resources/UI/gray_ready.png"
   },
   "edccb115-8935-404f-8634-0733c4e416dc": {
-    "asset": 1778755027924,
-    "meta": 1778755792565,
+    "asset": 1779077015774,
+    "meta": 1779077038483,
     "relativePath": "resources/UI/frame_vip.png"
   },
   "44699673-03f6-4486-95ae-c6a8048053d9": {
-    "asset": 1778755027925,
-    "meta": 1778755792569,
+    "asset": 1779077015774,
+    "meta": 1779077038485,
     "relativePath": "resources/UI/gameplay_OffLine.png"
   },
   "b2d4f7dc-96d2-44f0-a903-fe56be26ff77": {
-    "asset": 1778755027889,
-    "meta": 1778755792570,
+    "asset": 1779077015768,
+    "meta": 1779077038475,
     "relativePath": "resources/UI/btn_mobile.png"
   },
   "cb2fc264-a9bd-4521-bff9-4ef7ff38d877": {
-    "asset": 1778755027887,
-    "meta": 1778755792573,
+    "asset": 1779077015767,
+    "meta": 1779077038495,
     "relativePath": "resources/UI/btn_happy_big.png"
   },
   "6cdd587a-9fc4-4081-a5fa-5053e01211b4": {
-    "asset": 1778755027929,
-    "meta": 1778755792574,
+    "asset": 1779077015776,
+    "meta": 1779077038493,
     "relativePath": "resources/UI/join_1.png"
   },
   "374467c4-ecb3-414d-a3af-3e760a1960c9": {
-    "asset": 1778755027929,
-    "meta": 1778755792575,
+    "asset": 1779077015776,
+    "meta": 1779077038488,
     "relativePath": "resources/UI/img_loginlist_login_close.png"
   },
   "b1ff0106-5586-4d51-a024-019fd3a936bc": {
-    "asset": 1778755027930,
-    "meta": 1778755792576,
+    "asset": 1779077015776,
+    "meta": 1779077038493,
     "relativePath": "resources/UI/join_2.png"
   },
   "2ec5ea12-10df-4734-8644-12312d733894": {
-    "asset": 1778755027929,
-    "meta": 1778755792577,
+    "asset": 1779077015776,
+    "meta": 1779077038490,
     "relativePath": "resources/UI/join_0.png"
   },
   "582ae2ab-22f0-4f3a-a7a2-0ba4fc8cfcb0": {
-    "asset": 1778755027939,
-    "meta": 1778755792587,
+    "asset": 1779077015781,
+    "meta": 1779077038500,
     "relativePath": "resources/UI/login"
   },
   "e523f91c-b5c3-43a9-a5c7-b62eccf8d65a": {
-    "asset": 1778755027930,
-    "meta": 1778755792578,
+    "asset": 1779077015776,
+    "meta": 1779077038498,
     "relativePath": "resources/UI/join_3.png"
   },
   "e3a145fb-b8ee-44b3-bf91-3d38075cee8f": {
-    "asset": 1778755027931,
-    "meta": 1778755792579,
+    "asset": 1779077015777,
+    "meta": 1779077038499,
     "relativePath": "resources/UI/join_4.png"
   },
   "fdf6537d-f955-49d5-a2cf-796bd3096185": {
-    "asset": 1778755027931,
-    "meta": 1778755792586,
+    "asset": 1779077015777,
+    "meta": 1779077038501,
     "relativePath": "resources/UI/join_5.png"
   },
   "122b7e95-d673-44ad-a768-d5f1023c21ab": {
-    "asset": 1778755027932,
-    "meta": 1778755792587,
+    "asset": 1779077015777,
+    "meta": 1779077038500,
     "relativePath": "resources/UI/join_6.png"
   },
   "075355de-98c4-46b3-bbfb-aaa79e819a33": {
-    "asset": 1778755027932,
-    "meta": 1778755792588,
+    "asset": 1779077015777,
+    "meta": 1779077038508,
     "relativePath": "resources/UI/join_8.png"
   },
   "3eb84f51-bb81-4574-b0a6-315070812557": {
-    "asset": 1778755027932,
-    "meta": 1778755792589,
+    "asset": 1779077015777,
+    "meta": 1779077038501,
     "relativePath": "resources/UI/join_7.png"
   },
   "54d389e4-f2a3-4cb0-b063-de842c8250ec": {
-    "asset": 1778755027940,
-    "meta": 1778755795131,
+    "asset": 1779077015782,
+    "meta": 1779077040675,
     "relativePath": "resources/UI/public_ui.plist"
   },
   "9c7c7c17-b4cf-45df-9d4c-7919fa6c42d2": {
-    "asset": 1778755027933,
-    "meta": 1778755792591,
+    "asset": 1779077015778,
+    "meta": 1779077038508,
     "relativePath": "resources/UI/join_9.png"
   },
   "6c6d1c43-6208-46f6-9a62-1560b890e579": {
-    "asset": 1778755027933,
-    "meta": 1778755792592,
+    "asset": 1779077015778,
+    "meta": 1779077038511,
     "relativePath": "resources/UI/join_youxia.png"
   },
   "366615ea-a8c2-4714-8495-6528829fef8c": {
-    "asset": 1778755027933,
-    "meta": 1778755792592,
+    "asset": 1779077015778,
+    "meta": 1779077038512,
     "relativePath": "resources/UI/join_zuoxia.png"
   },
   "6f565816-9979-4ee0-a223-3ff124a98d03": {
-    "asset": 1778755027934,
-    "meta": 1778755792598,
+    "asset": 1779077015778,
+    "meta": 1779077038520,
     "relativePath": "resources/UI/joininputBg.png"
   },
   "e0839464-b2d6-459a-a545-3df5cb3d050f": {
-    "asset": 1778755027951,
-    "meta": 1778755795133,
+    "asset": 1779077015786,
+    "meta": 1779077040676,
     "relativePath": "resources/font/matchTxt.fnt"
   },
   "f9debd5c-5164-4873-9202-6fb517837bc9": {
-    "asset": 1778755027942,
-    "meta": 1778755795134,
+    "asset": 1779077015783,
+    "meta": 1779077040676,
     "relativePath": "resources/UI/youqingTip.plist"
   },
   "34877a2c-29ad-4f77-827e-136c7f8329ba": {
-    "asset": 1778755027934,
-    "meta": 1778755792601,
+    "asset": 1779077015778,
+    "meta": 1779077038520,
     "relativePath": "resources/UI/loading_image.png"
   },
   "7cd26c8c-3d74-4c8c-9aa7-cc7299ef0e0d": {
-    "asset": 1778755027935,
-    "meta": 1778755792602,
+    "asset": 1779077015779,
+    "meta": 1779077038516,
     "relativePath": "resources/UI/lobby_pic_logo_xx.png"
   },
   "9023830e-856c-4dcc-8ec9-bdffb129e539": {
-    "asset": 1778755027939,
-    "meta": 1778755792604,
+    "asset": 1779077015781,
+    "meta": 1779077038517,
     "relativePath": "resources/UI/male_landlord_left.png"
   },
   "f1e2d3c4-b5a6-9780-8765-4321fedcba09": {
-    "asset": 1778755027971,
-    "meta": 1778755792611,
+    "asset": 1779077015791,
+    "meta": 1779077038545,
     "relativePath": "resources/prefabs/phone_login.prefab"
   },
   "1eb065a5-db22-443f-bada-73c5fbeda2f2": {
-    "asset": 1778755027972,
-    "meta": 1778755792623,
+    "asset": 1779077015791,
+    "meta": 1779077038546,
     "relativePath": "resources/prefabs/user_agreement.prefab"
   },
   "3b4c795b-4bb9-479a-9230-0c0ca0a12b6c": {
-    "asset": 1778755027940,
-    "meta": 1778755792605,
+    "asset": 1779077015781,
+    "meta": 1779077038519,
     "relativePath": "resources/UI/pm_ready.png"
   },
   "89096284-e5f8-4982-80ad-57537c7dcecd": {
-    "asset": 1778755027941,
-    "meta": 1778755792606,
+    "asset": 1779077015782,
+    "meta": 1779077038527,
     "relativePath": "resources/UI/room_money_frame.png"
   },
   "4c27b051-56da-4762-8ed2-dfd7df205412": {
-    "asset": 1778755027942,
-    "meta": 1778755792609,
+    "asset": 1779077015783,
+    "meta": 1779077038528,
     "relativePath": "resources/UI/yonghuxieyi.png"
   },
   "f6f21419-2191-4ea6-8c60-2988be26077c": {
-    "asset": 1778755027942,
-    "meta": 1778755792609,
+    "asset": 1779077015782,
+    "meta": 1779077038526,
     "relativePath": "resources/UI/room_touxiang.png"
   },
   "a33770ea-005e-46e6-b859-8ea29b994663": {
-    "asset": 1778755027941,
-    "meta": 1778755792623,
+    "asset": 1779077015782,
+    "meta": 1779077038542,
     "relativePath": "resources/UI/public_ui.png"
   },
   "b00a4c2a-df75-4127-b2b6-5fa5b19c59cb": {
-    "asset": 1778755027945,
-    "meta": 1778755792624,
+    "asset": 1779077015784,
+    "meta": 1779077038542,
     "relativePath": "resources/UI/yuanbaoIcon.png"
   },
   "ed52878d-ab93-4673-bed9-7c1e95b11a6e": {
-    "asset": 1778755027951,
-    "meta": 1778755792628,
+    "asset": 1779077015786,
+    "meta": 1779077038543,
     "relativePath": "resources/font/matchTxt_0.png"
   },
   "42e4870a-fb85-43c0-be83-f99bf2775261": {
-    "asset": 1778755027952,
-    "meta": 1778755792633,
+    "asset": 1779077015787,
+    "meta": 1779077038543,
     "relativePath": "resources/images/login_bg.png"
   },
   "6509688b-3070-4231-850a-79bed588aa9b": {
-    "asset": 1778755027981,
-    "meta": 1778755792684,
+    "asset": 1779077015797,
+    "meta": 1779077038557,
     "relativePath": "resources/sound/m_cp_dani.mp4"
   },
   "79f34301-a1ac-44a4-9bca-2e736b19c49f": {
-    "asset": 1778755027975,
-    "meta": 1778755793281,
+    "asset": 1779077015793,
+    "meta": 1779077038863,
     "relativePath": "resources/sound/fapai.mp3"
   },
   "e6a10190-233c-44ce-a847-70e862840ccd": {
-    "asset": 1778755027897,
-    "meta": 1778755792640,
+    "asset": 1779077015768,
+    "meta": 1779077038469,
     "relativePath": "resources/UI/btn_shoping.png"
   },
   "9090d1fd-2ce0-4565-a6d5-cb17d435798a": {
-    "asset": 1778755027982,
-    "meta": 1778755793282,
+    "asset": 1779077015797,
+    "meta": 1779077038864,
     "relativePath": "resources/sound/m_cp_danzhang_1.mp3"
   },
   "fd222f9f-66af-4de2-a9a9-725bd9cfd933": {
-    "asset": 1778755027974,
-    "meta": 1778755793283,
+    "asset": 1779077015793,
+    "meta": 1779077038863,
     "relativePath": "resources/sound/duizi.mp3"
   },
   "f8e7d6c5-b4a3-2980-8765-4321fedcba98": {
-    "asset": 1778755027954,
-    "meta": 1778755792643,
+    "asset": 1779077015787,
+    "meta": 1779077038555,
     "relativePath": "resources/images/user_agreement_bg.png"
   },
   "2b7b0bce-2a2c-49ac-937b-c7429a18704a": {
-    "asset": 1778755027975,
-    "meta": 1778755793283,
+    "asset": 1779077015793,
+    "meta": 1779077038864,
     "relativePath": "resources/sound/fapai1.mp3"
   },
   "f5df22f1-d6c8-4e51-a36e-c62d4d5122cd": {
-    "asset": 1778755027980,
-    "meta": 1778755793283,
+    "asset": 1779077015796,
+    "meta": 1779077038864,
     "relativePath": "resources/sound/m_cp_buyao.mp3"
   },
   "e2ee8e6a-7a71-4734-a5b8-ff479b9beb4c": {
-    "asset": 1778755027953,
-    "meta": 1778755792671,
+    "asset": 1779077015787,
+    "meta": 1779077038565,
     "relativePath": "resources/images/login_bg_01.png"
   },
   "b02bd0b0-0f8a-466d-9909-b38d71f69ffd": {
-    "asset": 1778755027980,
-    "meta": 1778755793284,
+    "asset": 1779077015796,
+    "meta": 1779077038865,
     "relativePath": "resources/sound/m_cp_dani.mp3"
   },
   "ea7c930e-063c-4b94-9f8d-0b8401d06933": {
-    "asset": 1778755027983,
-    "meta": 1778755793284,
+    "asset": 1779077015797,
+    "meta": 1779077038862,
     "relativePath": "resources/sound/m_cp_danzhang_11.mp3"
   },
   "80e921f7-2ba9-4618-a6a4-a7b30830e708": {
-    "asset": 1778755027944,
-    "meta": 1778755792672,
+    "asset": 1779077015784,
+    "meta": 1779077038566,
     "relativePath": "resources/UI/youqingTip.png"
   },
   "929b8631-6d22-4045-82da-084f31d1dbe6": {
-    "asset": 1778755027982,
-    "meta": 1778755793285,
+    "asset": 1779077015797,
+    "meta": 1779077038863,
     "relativePath": "resources/sound/m_cp_danzhang_10.mp3"
   },
   "b233f2fb-7e3a-48e8-a062-faf02fb6c85b": {
-    "asset": 1778755027974,
-    "meta": 1778755793287,
+    "asset": 1779077015792,
+    "meta": 1779077038866,
     "relativePath": "resources/sound/bg.mp3"
   },
   "c4b49d56-c76c-4a7d-a0b3-3acd4ce44f7e": {
-    "asset": 1778755027983,
-    "meta": 1778755793288,
+    "asset": 1779077015797,
+    "meta": 1779077038871,
     "relativePath": "resources/sound/m_cp_danzhang_12.mp3"
   },
   "6baa6ea6-d684-450d-b1de-2404c5ceff91": {
-    "asset": 1778755027983,
-    "meta": 1778755793290,
+    "asset": 1779077015797,
+    "meta": 1779077038870,
     "relativePath": "resources/sound/m_cp_danzhang_13.mp3"
   },
   "4a4c60f9-7772-4721-a77c-de0125306748": {
-    "asset": 1778755027979,
-    "meta": 1778755793292,
+    "asset": 1779077015796,
+    "meta": 1779077038868,
     "relativePath": "resources/sound/login_bg.ogg"
   },
   "d84daa10-f5cc-486b-9b3e-8db2cc3db7d9": {
-    "asset": 1778755027984,
-    "meta": 1778755793293,
+    "asset": 1779077015797,
+    "meta": 1779077038870,
     "relativePath": "resources/sound/m_cp_danzhang_14.mp3"
   },
   "79edc683-1db6-436d-a942-e5f12d93111b": {
-    "asset": 1778755027984,
-    "meta": 1778755793293,
+    "asset": 1779077015798,
+    "meta": 1779077038872,
     "relativePath": "resources/sound/m_cp_danzhang_15.mp3"
   },
   "24c442fc-5a31-4b1b-9999-9521c009a600": {
-    "asset": 1778755027986,
-    "meta": 1778755793295,
+    "asset": 1779077015798,
+    "meta": 1779077038873,
     "relativePath": "resources/sound/m_cp_danzhang_4.mp3"
   },
   "91a3f5e8-335f-4311-90d7-327c90283bf6": {
-    "asset": 1778755027986,
-    "meta": 1778755793296,
+    "asset": 1779077015798,
+    "meta": 1779077038871,
     "relativePath": "resources/sound/m_cp_danzhang_5.mp3"
   },
   "2753782a-0bf4-482b-8fce-3284cd0b46b1": {
-    "asset": 1778755027985,
-    "meta": 1778755793296,
+    "asset": 1779077015798,
+    "meta": 1779077038873,
     "relativePath": "resources/sound/m_cp_danzhang_3.mp3"
   },
   "20cc7ed1-b356-4654-8310-ac4499edafab": {
-    "asset": 1778755027986,
-    "meta": 1778755793297,
+    "asset": 1779077015798,
+    "meta": 1779077038875,
     "relativePath": "resources/sound/m_cp_danzhang_6.mp3"
   },
   "dfc98882-bc78-4edf-9101-736f1d6ae309": {
-    "asset": 1778755027985,
-    "meta": 1778755793297,
+    "asset": 1779077015798,
+    "meta": 1779077038874,
     "relativePath": "resources/sound/m_cp_danzhang_2.mp3"
   },
   "c6639e00-fe1a-47a1-8091-290ba8d7fbaf": {
-    "asset": 1778755027987,
-    "meta": 1778755793299,
+    "asset": 1779077015798,
+    "meta": 1779077038876,
     "relativePath": "resources/sound/m_cp_danzhang_7.mp3"
   },
   "332a8f8c-b94e-4636-a344-92996a1da352": {
-    "asset": 1778755027987,
-    "meta": 1778755793300,
+    "asset": 1779077015798,
+    "meta": 1779077038877,
     "relativePath": "resources/sound/m_cp_danzhang_8.mp3"
   },
   "002c311a-3284-41b2-a2dd-356e4bcc5e74": {
-    "asset": 1778755027987,
-    "meta": 1778755793301,
+    "asset": 1779077015799,
+    "meta": 1779077038878,
     "relativePath": "resources/sound/m_cp_danzhang_9.mp3"
   },
   "d18840be-6ddc-4e02-995e-004aa21b13fd": {
-    "asset": 1778755027988,
-    "meta": 1778755793302,
+    "asset": 1779077015799,
+    "meta": 1779077038879,
     "relativePath": "resources/sound/m_cp_duizi_10.mp3"
   },
   "2510fd0a-7795-49fc-b211-fc5df735f3e1": {
-    "asset": 1778755027988,
-    "meta": 1778755793303,
+    "asset": 1779077015799,
+    "meta": 1779077038878,
     "relativePath": "resources/sound/m_cp_duizi_1.mp3"
   },
   "b019b23f-9286-43a5-ab90-ba1c507f43fc": {
-    "asset": 1778755027989,
-    "meta": 1778755793304,
+    "asset": 1779077015799,
+    "meta": 1779077038880,
     "relativePath": "resources/sound/m_cp_duizi_11.mp3"
   },
   "28849937-7264-457a-a11a-44cdad2fad5b": {
-    "asset": 1778755027989,
-    "meta": 1778755793306,
+    "asset": 1779077015799,
+    "meta": 1779077038880,
     "relativePath": "resources/sound/m_cp_duizi_12.mp3"
   },
   "2fdcc8d4-f76b-437a-9224-2694fd57cca1": {
-    "asset": 1778755027989,
-    "meta": 1778755793306,
+    "asset": 1779077015799,
+    "meta": 1779077038881,
     "relativePath": "resources/sound/m_cp_duizi_13.mp3"
   },
   "caef80b7-a26c-42f6-9923-02df8886c045": {
-    "asset": 1778755027990,
-    "meta": 1778755793307,
+    "asset": 1779077015799,
+    "meta": 1779077038882,
     "relativePath": "resources/sound/m_cp_duizi_2.mp3"
   },
   "44d2b707-ebbf-46ce-ad30-b13870c929b9": {
-    "asset": 1778755027990,
-    "meta": 1778755793308,
+    "asset": 1779077015799,
+    "meta": 1779077038883,
     "relativePath": "resources/sound/m_cp_duizi_3.mp3"
   },
   "2d544e89-efeb-4af9-b1bb-2bbd29e9e3a3": {
-    "asset": 1778755027990,
-    "meta": 1778755793308,
+    "asset": 1779077015800,
+    "meta": 1779077038884,
     "relativePath": "resources/sound/m_cp_duizi_4.mp3"
   },
   "ec6f10e3-e1f1-4b80-b366-7abc4e4f87d5": {
-    "asset": 1778755027991,
-    "meta": 1778755793309,
+    "asset": 1779077015800,
+    "meta": 1779077038885,
     "relativePath": "resources/sound/m_cp_duizi_5.mp3"
   },
   "88dedc13-b75c-4dbd-9de5-8c5f46ba0a30": {
-    "asset": 1778755027991,
-    "meta": 1778755793310,
+    "asset": 1779077015800,
+    "meta": 1779077038886,
     "relativePath": "resources/sound/m_cp_duizi_6.mp3"
   },
   "2540d2b9-d130-42da-aac0-1078307005dc": {
-    "asset": 1778755027991,
-    "meta": 1778755793311,
+    "asset": 1779077015800,
+    "meta": 1779077038886,
     "relativePath": "resources/sound/m_cp_duizi_7.mp3"
   },
   "6123138e-3fda-4e71-ae1d-eb7861c39cc5": {
-    "asset": 1778755027992,
-    "meta": 1778755793312,
+    "asset": 1779077015800,
+    "meta": 1779077038887,
     "relativePath": "resources/sound/m_cp_duizi_8.mp3"
   },
   "7acaf293-23ce-4b1a-8d6f-aa56f5574a6a": {
-    "asset": 1778755027992,
-    "meta": 1778755793313,
+    "asset": 1779077015800,
+    "meta": 1779077038888,
     "relativePath": "resources/sound/m_cp_duizi_9.mp3"
   },
   "c9430963-b463-429e-b1ff-5476ec2d8474": {
-    "asset": 1778755027993,
-    "meta": 1778755793314,
+    "asset": 1779077015801,
+    "meta": 1779077038889,
     "relativePath": "resources/sound/m_cp_feiji.mp3"
   },
   "3669f7d6-0ea1-4e81-a195-68b6c4c1c776": {
-    "asset": 1778755027994,
-    "meta": 1778755793316,
+    "asset": 1779077015801,
+    "meta": 1779077038891,
     "relativePath": "resources/sound/m_cp_nv_danzhang_1.mp3"
   },
   "7bdddce8-9908-4e5f-9fb0-999777dd8a16": {
-    "asset": 1778755027994,
-    "meta": 1778755793317,
+    "asset": 1779077015801,
+    "meta": 1779077038891,
     "relativePath": "resources/sound/m_cp_nv_buyao.mp3"
   },
   "6b3a1303-e570-47d6-b1dd-7fc4c361f9f2": {
-    "asset": 1778755027995,
-    "meta": 1778755793317,
+    "asset": 1779077015801,
+    "meta": 1779077038892,
     "relativePath": "resources/sound/m_cp_nv_danzhang_10.mp3"
   },
   "99310132-4c1c-484b-a02b-df4c7debf7cd": {
-    "asset": 1778755027995,
-    "meta": 1778755793318,
+    "asset": 1779077015802,
+    "meta": 1779077038893,
     "relativePath": "resources/sound/m_cp_nv_danzhang_11.mp3"
   },
   "bf13a784-0858-46de-b6d9-7868e343c959": {
-    "asset": 1778755027993,
-    "meta": 1778755793318,
+    "asset": 1779077015801,
+    "meta": 1779077038889,
     "relativePath": "resources/sound/m_cp_liandui.mp3"
   },
   "d9be8ad1-5c08-47be-980c-9c502c51ecca": {
-    "asset": 1778755027996,
-    "meta": 1778755793319,
+    "asset": 1779077015802,
+    "meta": 1779077038894,
     "relativePath": "resources/sound/m_cp_nv_danzhang_12.mp3"
   },
   "51a7390a-74a2-49a6-b0f2-935a5c2bb40c": {
-    "asset": 1778755027996,
-    "meta": 1778755793320,
+    "asset": 1779077015802,
+    "meta": 1779077038894,
     "relativePath": "resources/sound/m_cp_nv_danzhang_13.mp3"
   },
   "4f1b1901-e130-44ef-aa0c-8107a1856ef9": {
-    "asset": 1778755027996,
-    "meta": 1778755793321,
+    "asset": 1779077015802,
+    "meta": 1779077038896,
     "relativePath": "resources/sound/m_cp_nv_danzhang_14.mp3"
   },
   "9542af00-cd2f-49c4-9aee-21b31fa5282b": {
-    "asset": 1778755027997,
-    "meta": 1778755793321,
+    "asset": 1779077015803,
+    "meta": 1779077038895,
     "relativePath": "resources/sound/m_cp_nv_danzhang_15.mp3"
   },
   "d27072c6-6821-447f-8cae-72b889861951": {
-    "asset": 1778755027997,
-    "meta": 1778755793322,
+    "asset": 1779077015803,
+    "meta": 1779077038897,
     "relativePath": "resources/sound/m_cp_nv_danzhang_2.mp3"
   },
   "6099cfd6-fee5-4b4c-ab8e-b0a54d9a5719": {
-    "asset": 1778755027997,
-    "meta": 1778755793324,
+    "asset": 1779077015803,
+    "meta": 1779077038897,
     "relativePath": "resources/sound/m_cp_nv_danzhang_3.mp3"
   },
   "0e13a923-181b-4256-852a-93e0a1db1972": {
-    "asset": 1778755027998,
-    "meta": 1778755793326,
+    "asset": 1779077015803,
+    "meta": 1779077038899,
     "relativePath": "resources/sound/m_cp_nv_danzhang_4.mp3"
   },
   "690b94ff-470a-4acd-afea-c6d051801e88": {
-    "asset": 1778755027999,
-    "meta": 1778755793327,
+    "asset": 1779077015803,
+    "meta": 1779077038900,
     "relativePath": "resources/sound/m_cp_nv_danzhang_6.mp3"
   },
   "48886339-a5e7-40e3-904b-6300cedc8b01": {
-    "asset": 1778755027998,
-    "meta": 1778755793328,
+    "asset": 1779077015803,
+    "meta": 1779077038899,
     "relativePath": "resources/sound/m_cp_nv_danzhang_5.mp3"
   },
   "10eadcf1-a9c8-4f7b-a4e3-b827b3b2cf11": {
-    "asset": 1778755027999,
-    "meta": 1778755793329,
+    "asset": 1779077015804,
+    "meta": 1779077038901,
     "relativePath": "resources/sound/m_cp_nv_danzhang_7.mp3"
   },
   "41e5edfb-f185-4bfb-8bb6-b418cab52da9": {
-    "asset": 1778755027999,
-    "meta": 1778755793329,
+    "asset": 1779077015804,
+    "meta": 1779077038902,
     "relativePath": "resources/sound/m_cp_nv_danzhang_8.mp3"
   },
   "e7ab64b8-83e7-4b77-8782-e1a14746ea9a": {
-    "asset": 1778755028000,
-    "meta": 1778755793330,
+    "asset": 1779077015804,
+    "meta": 1779077038902,
     "relativePath": "resources/sound/m_cp_nv_danzhang_9.mp3"
   },
   "235536da-14db-4399-aef3-069836ba06af": {
-    "asset": 1778755028000,
-    "meta": 1778755793331,
+    "asset": 1779077015804,
+    "meta": 1779077038905,
     "relativePath": "resources/sound/m_cp_nv_duizi_10.mp3"
   },
   "f1060752-a630-4499-9b0c-f56be51d36a7": {
-    "asset": 1778755028000,
-    "meta": 1778755793332,
+    "asset": 1779077015804,
+    "meta": 1779077038903,
     "relativePath": "resources/sound/m_cp_nv_duizi_1.mp3"
   },
   "59a7375b-69ff-4487-9ec9-66cf8c680286": {
-    "asset": 1778755028001,
-    "meta": 1778755793333,
+    "asset": 1779077015805,
+    "meta": 1779077038906,
     "relativePath": "resources/sound/m_cp_nv_duizi_12.mp3"
   },
   "9374200b-8f9e-4a92-9cfc-95e047c03f86": {
-    "asset": 1778755028001,
-    "meta": 1778755793334,
+    "asset": 1779077015805,
+    "meta": 1779077038905,
     "relativePath": "resources/sound/m_cp_nv_duizi_11.mp3"
   },
   "763676f9-ce96-4a4d-8ce5-faadfb613052": {
-    "asset": 1778755028001,
-    "meta": 1778755793335,
+    "asset": 1779077015805,
+    "meta": 1779077038907,
     "relativePath": "resources/sound/m_cp_nv_duizi_13.mp3"
   },
   "79ab94a6-098f-4ce4-8507-4b6e4f4f4295": {
-    "asset": 1778755028002,
-    "meta": 1778755793336,
+    "asset": 1779077015805,
+    "meta": 1779077038908,
     "relativePath": "resources/sound/m_cp_nv_duizi_2.mp3"
   },
   "6c340698-b3d5-43a6-8582-e06484ca0e97": {
-    "asset": 1778755028002,
-    "meta": 1778755793337,
+    "asset": 1779077015805,
+    "meta": 1779077038908,
     "relativePath": "resources/sound/m_cp_nv_duizi_3.mp3"
   },
   "e428c378-f733-4add-bf7a-ec24335d2fb9": {
-    "asset": 1778755028002,
-    "meta": 1778755793339,
+    "asset": 1779077015806,
+    "meta": 1779077038910,
     "relativePath": "resources/sound/m_cp_nv_duizi_4.mp3"
   },
   "6b56af1a-7e57-4ff6-9570-8dc10f4476d9": {
-    "asset": 1778755028003,
-    "meta": 1778755793341,
+    "asset": 1779077015806,
+    "meta": 1779077038911,
     "relativePath": "resources/sound/m_cp_nv_duizi_6.mp3"
   },
   "3d55af53-1e1f-48a6-b99d-7f0a55c395ac": {
-    "asset": 1778755028003,
-    "meta": 1778755793341,
+    "asset": 1779077015806,
+    "meta": 1779077038910,
     "relativePath": "resources/sound/m_cp_nv_duizi_5.mp3"
   },
   "f3e884d5-98f6-4d09-b33b-3caba5ed93bb": {
-    "asset": 1778755028004,
-    "meta": 1778755793342,
+    "asset": 1779077015806,
+    "meta": 1779077038912,
     "relativePath": "resources/sound/m_cp_nv_duizi_7.mp3"
   },
   "d20df807-be32-4dcf-9a97-66c31fc681af": {
-    "asset": 1778755028004,
-    "meta": 1778755793343,
+    "asset": 1779077015806,
+    "meta": 1779077038913,
     "relativePath": "resources/sound/m_cp_nv_duizi_8.mp3"
   },
   "fa2f89fa-dcb1-4202-a289-88df188e51b5": {
-    "asset": 1778755028004,
-    "meta": 1778755793344,
+    "asset": 1779077015807,
+    "meta": 1779077038914,
     "relativePath": "resources/sound/m_cp_nv_duizi_9.mp3"
   },
   "193b6eb9-bbd2-4443-a4e6-5b5c43baa13e": {
-    "asset": 1778755028005,
-    "meta": 1778755793345,
+    "asset": 1779077015807,
+    "meta": 1779077038914,
     "relativePath": "resources/sound/m_cp_nv_feiji.mp3"
   },
   "6975fe3e-36cc-4e98-bb0a-524baea33a6b": {
-    "asset": 1778755028005,
-    "meta": 1778755793346,
+    "asset": 1779077015807,
+    "meta": 1779077038917,
     "relativePath": "resources/sound/m_cp_nv_sandaidui.mp3"
   },
   "47a536c7-eab5-4f87-a9b6-6c464e7ea5a5": {
-    "asset": 1778755028006,
-    "meta": 1778755793347,
+    "asset": 1779077015808,
+    "meta": 1779077038917,
     "relativePath": "resources/sound/m_cp_nv_sandaiyi.mp3"
   },
   "fc1c3d15-b059-48cc-8503-9cbac98bb6f2": {
-    "asset": 1778755028005,
-    "meta": 1778755793347,
+    "asset": 1779077015807,
+    "meta": 1779077038916,
     "relativePath": "resources/sound/m_cp_nv_liandui.mp3"
   },
   "6bb00a1f-f105-4b67-84e4-cb624a49901b": {
-    "asset": 1778755028006,
-    "meta": 1778755793349,
+    "asset": 1779077015808,
+    "meta": 1779077038919,
     "relativePath": "resources/sound/m_cp_nv_sange_1.mp3"
   },
   "cfc32ff0-993d-4c82-9d55-a1bfd4a61f94": {
-    "asset": 1778755028007,
-    "meta": 1778755793350,
+    "asset": 1779077015808,
+    "meta": 1779077038919,
     "relativePath": "resources/sound/m_cp_nv_sange_10.mp3"
   },
   "3f1c3c90-34f7-408e-92bf-2c036b75446c": {
-    "asset": 1778755028007,
-    "meta": 1778755793351,
+    "asset": 1779077015808,
+    "meta": 1779077038920,
     "relativePath": "resources/sound/m_cp_nv_sange_11.mp3"
   },
   "1f9283ad-331b-420d-a3b3-1f641665e2b7": {
-    "asset": 1778755028008,
-    "meta": 1778755793352,
+    "asset": 1779077015809,
+    "meta": 1779077038923,
     "relativePath": "resources/sound/m_cp_nv_sange_13.mp3"
   },
   "4346ebb8-8bac-4388-9c85-8dcca54fea68": {
-    "asset": 1778755028007,
-    "meta": 1778755793353,
+    "asset": 1779077015808,
+    "meta": 1779077038920,
     "relativePath": "resources/sound/m_cp_nv_sange_12.mp3"
   },
   "1a4d3cef-6f93-475c-8ffd-110dc59f0a6b": {
-    "asset": 1778755028008,
-    "meta": 1778755793355,
+    "asset": 1779077015809,
+    "meta": 1779077038923,
     "relativePath": "resources/sound/m_cp_nv_sange_2.mp3"
   },
   "7cefcb6f-d78a-4eae-a00c-ecd8d028d814": {
-    "asset": 1778755028009,
-    "meta": 1778755793356,
+    "asset": 1779077015809,
+    "meta": 1779077038924,
     "relativePath": "resources/sound/m_cp_nv_sange_3.mp3"
   },
   "f990aa1e-0e30-4315-a0e2-614916087fd3": {
-    "asset": 1778755028009,
-    "meta": 1778755793357,
+    "asset": 1779077015809,
+    "meta": 1779077038926,
     "relativePath": "resources/sound/m_cp_nv_sange_4.mp3"
   },
   "d691d399-34f9-4879-a72a-4c8eefa2c807": {
-    "asset": 1778755028009,
-    "meta": 1778755793357,
+    "asset": 1779077015810,
+    "meta": 1779077038927,
     "relativePath": "resources/sound/m_cp_nv_sange_5.mp3"
   },
   "c9b81560-b4b7-4fab-ab22-dbaa7030f338": {
-    "asset": 1778755028010,
-    "meta": 1778755793358,
+    "asset": 1779077015810,
+    "meta": 1779077038928,
     "relativePath": "resources/sound/m_cp_nv_sange_6.mp3"
   },
   "6c5b0c26-e7ea-45d5-aa78-20aaa6a494c7": {
-    "asset": 1778755028010,
-    "meta": 1778755793359,
+    "asset": 1779077015810,
+    "meta": 1779077038929,
     "relativePath": "resources/sound/m_cp_nv_sange_7.mp3"
   },
   "25e1a4cf-a094-4b7d-94b0-0641732572a4": {
-    "asset": 1778755028010,
-    "meta": 1778755793360,
+    "asset": 1779077015810,
+    "meta": 1779077038929,
     "relativePath": "resources/sound/m_cp_nv_sange_8.mp3"
   },
   "d8bf5283-039b-4eaf-83e2-d7134a16842a": {
-    "asset": 1778755028011,
-    "meta": 1778755793362,
+    "asset": 1779077015810,
+    "meta": 1779077038930,
     "relativePath": "resources/sound/m_cp_nv_sange_9.mp3"
   },
   "342cf9c5-4670-4f21-abdd-1dbe1b1784c3": {
-    "asset": 1778755028011,
-    "meta": 1778755793362,
+    "asset": 1779077015811,
+    "meta": 1779077038931,
     "relativePath": "resources/sound/m_cp_nv_shunzi.mp3"
   },
   "3ae94252-af07-4d14-8b6a-b9728f3aa2c1": {
-    "asset": 1778755028011,
-    "meta": 1778755793363,
+    "asset": 1779077015811,
+    "meta": 1779077038932,
     "relativePath": "resources/sound/m_cp_nv_sidaier.mp3"
   },
   "a4621baf-1c56-4714-8d02-a498effd500c": {
-    "asset": 1778755028012,
-    "meta": 1778755793364,
+    "asset": 1779077015811,
+    "meta": 1779077038934,
     "relativePath": "resources/sound/m_cp_nv_sidailiangdui.mp3"
   },
   "b9ea4d5c-96dc-4d1c-9f41-ecaeb6355838": {
-    "asset": 1778755028012,
-    "meta": 1778755793366,
+    "asset": 1779077015811,
+    "meta": 1779077038933,
     "relativePath": "resources/sound/m_cp_nv_wangzha.mp3"
   },
   "2f498c49-989a-4834-8ff4-bba700074b6e": {
-    "asset": 1778755028013,
-    "meta": 1778755793367,
+    "asset": 1779077015811,
+    "meta": 1779077038936,
     "relativePath": "resources/sound/m_cp_sandaidui.mp3"
   },
   "a40bd176-9c3b-4514-96ec-99ad21d513d9": {
-    "asset": 1778755028013,
-    "meta": 1778755793367,
+    "asset": 1779077015812,
+    "meta": 1779077038937,
     "relativePath": "resources/sound/m_cp_sandaiyi.mp3"
   },
   "838362cd-a4f7-4f7f-a26c-d9ed064ed4a1": {
-    "asset": 1778755028013,
-    "meta": 1778755793372,
+    "asset": 1779077015812,
+    "meta": 1779077038939,
     "relativePath": "resources/sound/m_cp_sange_1.mp3"
   },
   "fd55f61d-17a9-44c0-bbdc-f60e9193ee6c": {
-    "asset": 1778755028017,
-    "meta": 1778755793373,
+    "asset": 1779077015812,
+    "meta": 1779077038939,
     "relativePath": "resources/sound/m_cp_sange_10.mp3"
   },
   "0657a059-b3d3-4f15-a5ac-e2080c0719d9": {
-    "asset": 1778755028017,
-    "meta": 1778755793385,
+    "asset": 1779077015812,
+    "meta": 1779077038940,
     "relativePath": "resources/sound/m_cp_sange_11.mp3"
   },
   "405229ad-49d8-459f-a573-c1de8df259a0": {
-    "asset": 1778755028017,
-    "meta": 1778755793387,
+    "asset": 1779077015812,
+    "meta": 1779077038940,
     "relativePath": "resources/sound/m_cp_sange_12.mp3"
   },
   "777c38fc-642d-429a-b13d-1895fe6ab598": {
-    "asset": 1778755028019,
-    "meta": 1778755793389,
+    "asset": 1779077015813,
+    "meta": 1779077038942,
     "relativePath": "resources/sound/m_cp_sange_2.mp3"
   },
   "bef14e6d-1b59-488b-aa2f-f32979a83a61": {
-    "asset": 1778755028019,
-    "meta": 1778755793390,
+    "asset": 1779077015813,
+    "meta": 1779077038941,
     "relativePath": "resources/sound/m_cp_sange_13.mp3"
   },
   "55b905b1-290f-42ba-9853-3631f840396b": {
-    "asset": 1778755028019,
-    "meta": 1778755793392,
+    "asset": 1779077015813,
+    "meta": 1779077038945,
     "relativePath": "resources/sound/m_cp_sange_3.mp3"
   },
   "a5923dda-10ca-45e1-ba75-f2b888fa8daf": {
-    "asset": 1778755028020,
-    "meta": 1778755793396,
+    "asset": 1779077015813,
+    "meta": 1779077038944,
     "relativePath": "resources/sound/m_cp_sange_4.mp3"
   },
   "6bd97759-4fe0-46b4-81b5-5cf7a8451f3b": {
-    "asset": 1778755028020,
-    "meta": 1778755793399,
+    "asset": 1779077015813,
+    "meta": 1779077038944,
     "relativePath": "resources/sound/m_cp_sange_5.mp3"
   },
   "b45bcb61-956c-41ae-972a-1cdc27e547c9": {
-    "asset": 1778755028020,
-    "meta": 1778755793400,
+    "asset": 1779077015814,
+    "meta": 1779077038946,
     "relativePath": "resources/sound/m_cp_sange_6.mp3"
   },
   "8ccb9bd8-240a-440d-828d-2c5b6ff6e674": {
-    "asset": 1778755028021,
-    "meta": 1778755793401,
+    "asset": 1779077015814,
+    "meta": 1779077038950,
     "relativePath": "resources/sound/m_cp_sange_8.mp3"
   },
   "a86019ba-67c0-40f6-9fed-bb800fa99905": {
-    "asset": 1778755028021,
-    "meta": 1778755793401,
+    "asset": 1779077015814,
+    "meta": 1779077038947,
     "relativePath": "resources/sound/m_cp_sange_7.mp3"
   },
   "f7f78a06-8742-41e8-88a2-5496a62fef2d": {
-    "asset": 1778755028021,
-    "meta": 1778755793403,
+    "asset": 1779077015814,
+    "meta": 1779077038950,
     "relativePath": "resources/sound/m_cp_sange_9.mp3"
   },
   "38b42c24-995f-4687-829d-778faf558a17": {
-    "asset": 1778755028022,
-    "meta": 1778755793407,
+    "asset": 1779077015815,
+    "meta": 1779077038949,
     "relativePath": "resources/sound/m_cp_shunzi.mp3"
   },
   "7616fd0a-71fd-4f38-9e9e-73ad7113c48a": {
-    "asset": 1778755028023,
-    "meta": 1778755793408,
+    "asset": 1779077015815,
+    "meta": 1779077038952,
     "relativePath": "resources/sound/m_cp_wangzha.mp3"
   },
   "886f2718-b26a-4c63-8d5e-17d84c484a69": {
-    "asset": 1778755028023,
-    "meta": 1778755793409,
+    "asset": 1779077015815,
+    "meta": 1779077038951,
     "relativePath": "resources/sound/m_cp_sidailiangdui.mp3"
   },
   "4b73535a-1770-4210-bd97-6c4e94b1cef3": {
-    "asset": 1778755028023,
-    "meta": 1778755793410,
+    "asset": 1779077015815,
+    "meta": 1779077038955,
     "relativePath": "resources/sound/m_cp_yaobuqi.mp3"
   },
   "dbe3f047-d3a6-4f28-ae18-7f350d5e2b79": {
-    "asset": 1778755028022,
-    "meta": 1778755793410,
+    "asset": 1779077015815,
+    "meta": 1779077038949,
     "relativePath": "resources/sound/m_cp_sidaier.mp3"
   },
   "9d8fae08-3b11-424e-b2be-d424ee1fa058": {
-    "asset": 1778755028025,
-    "meta": 1778755793414,
+    "asset": 1779077015816,
+    "meta": 1779077038955,
     "relativePath": "resources/sound/m_nan_qiangdizhu.mp3"
   },
   "7df41fc4-32cb-43de-89b2-d7622dd4e0a9": {
-    "asset": 1778755028025,
-    "meta": 1778755793415,
+    "asset": 1779077015816,
+    "meta": 1779077038957,
     "relativePath": "resources/sound/m_nan_qiangdizhu_woqiang.mp3"
   },
   "31996b86-ee36-40ba-976e-fbee020aba55": {
-    "asset": 1778755028026,
-    "meta": 1778755793415,
+    "asset": 1779077015817,
+    "meta": 1779077038959,
     "relativePath": "resources/sound/m_nv_buqiang.mp3"
   },
   "4583a48a-c19d-4df8-8aa9-e32853e85d50": {
-    "asset": 1778755028024,
-    "meta": 1778755793416,
+    "asset": 1779077015816,
+    "meta": 1779077038954,
     "relativePath": "resources/sound/m_nan_buqiang.mp3"
   },
   "b55d4718-e01b-42c2-ac4b-dc70d42f4750": {
-    "asset": 1778755028024,
-    "meta": 1778755793416,
+    "asset": 1779077015816,
+    "meta": 1779077038954,
     "relativePath": "resources/sound/m_cp_zhadan.mp3"
   },
   "8de25ba4-31aa-41de-93c8-58fb00390576": {
-    "asset": 1778755028026,
-    "meta": 1778755793418,
+    "asset": 1779077015817,
+    "meta": 1779077039123,
     "relativePath": "resources/sound/m_nv_qiangdizhu_01.mp3"
   },
   "053f87d3-6570-4822-915a-faca38967d6c": {
-    "asset": 1778755028027,
-    "meta": 1778755793419,
+    "asset": 1779077015817,
+    "meta": 1779077038958,
     "relativePath": "resources/sound/m_nv_qiangdizhu_02.mp3"
   },
   "813dcbde-a48c-458d-a77a-70d401ee3de6": {
-    "asset": 1778755028039,
-    "meta": 1778755793557,
+    "asset": 1779077015822,
+    "meta": 1779077039122,
     "relativePath": "scripts/data/arenaData.js"
   },
   "b3b4c5d6-e7f8-9012-abcd-ef1234567902": {
-    "asset": 1778755028040,
-    "meta": 1778755793559,
+    "asset": 1779077015822,
+    "meta": 1779077039123,
     "relativePath": "scripts/data/player.js"
   },
   "2b3a9a48-c50a-431e-8fe2-8d4f12cfc087": {
-    "asset": 1778755028027,
-    "meta": 1778755793563,
+    "asset": 1779077015817,
+    "meta": 1779077038960,
     "relativePath": "resources/sound/m_nv_qiangdizhu_woqiang_01.mp3"
   },
   "53598a81-2993-48f3-8be7-0e74476b2576": {
-    "asset": 1778771733192,
-    "meta": 1778771746103,
+    "asset": 1779077015824,
+    "meta": 1779077039124,
     "relativePath": "scripts/ddz/tournament"
   },
   "e2b3c4d5-e6f7-8901-abcd-ef1234567931": {
-    "asset": 1778755028043,
-    "meta": 1778755793649,
+    "asset": 1779077015824,
+    "meta": 1779077039287,
     "relativePath": "scripts/gameScene/gameScene.js"
   },
   "dda573e2-4091-42b2-972b-ad10f291758f": {
-    "asset": 1778755028043,
-    "meta": 1778755793683,
+    "asset": 1779077015824,
+    "meta": 1779077039319,
     "relativePath": "scripts/gameScene/gamebeforeUI.js"
   },
   "e1a3d6bf-a571-41ac-8449-e792f4814298": {
-    "asset": 1778760156958,
-    "meta": 1778771746103,
+    "asset": 1779077015826,
+    "meta": 1779077039708,
     "relativePath": "scripts/gameScene/prefabs"
   },
   "c26e5829-2c18-41c3-9d93-6edfe3ba2789": {
-    "asset": 1778755028048,
-    "meta": 1778755794831,
+    "asset": 1779077015828,
+    "meta": 1779077040280,
     "relativePath": "scripts/hallscene/prefabs_script"
   },
   "9b58d096-a717-4005-865c-9e0cdd659bd5": {
-    "asset": 1778755028028,
-    "meta": 1778755794838,
+    "asset": 1779077015818,
+    "meta": 1779077040384,
     "relativePath": "resources/sound/m_nv_yaobuqi.wav"
   },
   "dadec292-4c51-4334-b701-6cc3996c0001": {
-    "asset": 1778755028049,
-    "meta": 1778755794838,
+    "asset": 1779077015829,
+    "meta": 1779077040282,
     "relativePath": "scripts/lib/socket-io.js"
   },
-  "b05a6f20-48ea-415a-bf1d-76f4f4dc9a63": {
-    "asset": 1778755028050,
-    "meta": 1778755794922,
-    "relativePath": "scripts/loginscene/loginScene.js"
-  },
   "6533952d-904d-4aa1-8663-3f08a976bf07": {
-    "asset": 1778755028033,
-    "meta": 1778755794927,
+    "asset": 1779077015820,
+    "meta": 1779077040384,
     "relativePath": "resources/sound/start.mp3"
   },
   "4d337119-09a4-4d0d-933a-5fdcad66ce92": {
-    "asset": 1778755028032,
-    "meta": 1778755794927,
+    "asset": 1779077015820,
+    "meta": 1779077040384,
     "relativePath": "resources/sound/man_san_dai_yi_dui.ogg"
   },
   "ff1bf053-cce7-41a3-8f43-654936118999": {
-    "asset": 1778755028033,
-    "meta": 1778755794962,
+    "asset": 1779077015820,
+    "meta": 1779077040416,
     "relativePath": "resources/sound/start_a.ogg"
   },
   "62fccff5-5943-4a51-a469-83cd0d48e747": {
-    "asset": 1778755028051,
-    "meta": 1778755794963,
+    "asset": 1779077015829,
+    "meta": 1779077040428,
     "relativePath": "scripts/prefabs/card.prefab"
   },
   "0ba9ca5d-4e94-4247-9f32-0d1d9ca2bcd7": {
-    "asset": 1778755028034,
-    "meta": 1778755794963,
+    "asset": 1779077015820,
+    "meta": 1779077040427,
     "relativePath": "resources/sound/woman_bu_jiao.ogg"
   },
   "635873c5-8c65-4332-942e-6ebf9724a92c": {
-    "asset": 1778755028054,
-    "meta": 1778755794963,
+    "asset": 1779077015831,
+    "meta": 1779077040428,
     "relativePath": "scripts/util/http_api.js"
   },
   "f1b1fb4a-7977-439f-8fa0-53e36495f52c": {
-    "asset": 1778755028029,
-    "meta": 1778755794964,
+    "asset": 1779077015819,
+    "meta": 1779077040439,
     "relativePath": "resources/sound/m_shule.wav"
   },
   "d7e1b92e-4c11-4921-b8c2-918c622593ac": {
-    "asset": 1778755028054,
-    "meta": 1778755794964,
+    "asset": 1779077015831,
+    "meta": 1779077040429,
     "relativePath": "scripts/util/storage_util.js"
   },
   "a7b00965-17b9-415c-b18a-0d4c7673a6f6": {
-    "asset": 1778755028052,
-    "meta": 1778755794965,
+    "asset": 1779077015830,
+    "meta": 1779077040437,
     "relativePath": "scripts/prefabs/creatroom_bg.prefab"
   },
   "173183ef-d4cc-442d-be9d-fa8fd21e8d2c": {
-    "asset": 1778755028055,
-    "meta": 1778755794972,
+    "asset": 1779077015831,
+    "meta": 1779077040435,
     "relativePath": "scripts/util/waitnode.js"
   },
   "ff539d38-2932-40f6-84a0-8618722eceb9": {
-    "asset": 1778755028052,
-    "meta": 1778755794973,
+    "asset": 1779077015830,
+    "meta": 1779077040438,
     "relativePath": "scripts/prefabs/join_bk.prefab"
   },
   "35b436b2-298f-4615-9e30-7532f003e0d9": {
-    "asset": 1778755028035,
-    "meta": 1778755794973,
+    "asset": 1779077015820,
+    "meta": 1779077040436,
     "relativePath": "resources/sound/woman_jiao_di_zhu.ogg"
   },
   "0b8260aa-074b-4e36-b6ea-650e104bb5b2": {
-    "asset": 1778755028053,
-    "meta": 1778755794974,
+    "asset": 1779077015830,
+    "meta": 1779077040439,
     "relativePath": "scripts/prefabs/player_node.prefab"
   },
   "c9e33015-6b61-42d2-b1bc-02b23f7302f4": {
-    "asset": 1778755028030,
-    "meta": 1778755794975,
+    "asset": 1779077015819,
+    "meta": 1779077040435,
     "relativePath": "resources/sound/m_yingle.wav"
   },
   "cd0d2fd9-8a9e-4716-acd9-a9c1ddc90a34": {
-    "asset": 1778755028053,
-    "meta": 1778755794975,
+    "asset": 1779077015830,
+    "meta": 1779077040440,
     "relativePath": "scripts/prefabs/wait_node.prefab"
   },
   "5b73d966-7df9-44c5-8c2a-b73b029a9c8a": {
-    "asset": 1778755028047,
-    "meta": 1778755794978,
+    "asset": 1779077015828,
+    "meta": 1779077040441,
     "relativePath": "scripts/hallscene/hallScene.js.bak"
   },
   "40ce99a2-0922-48ea-b6d4-b2e1b7c45ff7": {
-    "asset": 1778755027908,
-    "meta": 1778755794985,
+    "asset": 1779077015770,
+    "meta": 1779077040455,
     "relativePath": "resources/UI/button/btn_bujiao.png"
   },
   "d0f95501-a2d9-4836-a24b-57a886777122": {
-    "asset": 1778755027906,
-    "meta": 1778755794986,
+    "asset": 1779077015769,
+    "meta": 1779077040450,
     "relativePath": "resources/UI/button/btn_ traveler.png"
   },
   "2f02030e-2e3b-4600-b44e-db2ace0d3629": {
-    "asset": 1778755027908,
-    "meta": 1778755794987,
+    "asset": 1779077015770,
+    "meta": 1779077040454,
     "relativePath": "resources/UI/button/btn_chupai.png"
   },
   "5e23abdf-e193-4fdf-bee4-57d05b5b1c8c": {
-    "asset": 1778755027906,
-    "meta": 1778755794987,
+    "asset": 1779077015770,
+    "meta": 1779077040450,
     "relativePath": "resources/UI/button/btn_baoming.png"
   },
   "a1b2c3d4-e5f6-7890-abcd-ef1234567970": {
-    "asset": 1778755027909,
-    "meta": 1778755794991,
+    "asset": 1779077015771,
+    "meta": 1779077040451,
     "relativePath": "resources/UI/button/btn_confirm.png"
   },
   "2b90fff8-39a8-43fe-887c-ed73beea411d": {
-    "asset": 1778755027910,
-    "meta": 1778755794992,
+    "asset": 1779077015771,
+    "meta": 1779077040456,
     "relativePath": "resources/UI/button/btn_no_baoming.png"
   },
   "1b450107-26a8-4e84-87c5-7e3013edf457": {
-    "asset": 1778755027907,
-    "meta": 1778755794993,
+    "asset": 1779077015770,
+    "meta": 1779077040451,
     "relativePath": "resources/UI/button/btn_baoming_backup.png"
   },
   "4bfde437-feaf-45cc-ae26-95379d1a4c28": {
-    "asset": 1778755027910,
-    "meta": 1778755794993,
+    "asset": 1779077015771,
+    "meta": 1779077040458,
     "relativePath": "resources/UI/button/btn_mobile.png"
   },
   "d0d79e2e-344b-43f1-ac19-e9e1b17ea9bc": {
-    "asset": 1778755027912,
-    "meta": 1778755794996,
+    "asset": 1779077015771,
+    "meta": 1779077040458,
     "relativePath": "resources/UI/button/btn_no_baoming_backup.png"
   },
   "2878dfbf-2ba3-422a-9e11-2be64c7232a9": {
-    "asset": 1778755027912,
-    "meta": 1778755794999,
+    "asset": 1779077015771,
+    "meta": 1779077040461,
     "relativePath": "resources/UI/button/btn_quxiaobaoming.png"
   },
   "bee5d208-011d-416a-8dce-cff306de87ef": {
-    "asset": 1778755027914,
-    "meta": 1778755795004,
+    "asset": 1779077015772,
+    "meta": 1779077040472,
     "relativePath": "resources/UI/button/btn_weixin.png"
   },
   "0df6f387-8c7f-4e76-82cf-a2e102c57d00": {
-    "asset": 1778755027918,
-    "meta": 1778755795158,
+    "asset": 1779077015773,
+    "meta": 1779077040697,
     "relativePath": "resources/UI/card/card.plist"
   },
   "df3c42b1-9903-4c9d-a046-23456c2ecd5b": {
-    "asset": 1778755027913,
-    "meta": 1778755795009,
+    "asset": 1779077015771,
+    "meta": 1779077040466,
     "relativePath": "resources/UI/button/btn_tisji.png"
   },
   "61d76624-86ec-4fbc-a39b-ddc186b18d4d": {
-    "asset": 1778755027914,
-    "meta": 1778755795010,
+    "asset": 1779077015772,
+    "meta": 1779077040470,
     "relativePath": "resources/UI/button/buqiangzhuang.png"
   },
   "1e6eb727-df11-4bef-8f6e-0e01e31cb886": {
-    "asset": 1778755027915,
-    "meta": 1778755795010,
+    "asset": 1779077015772,
+    "meta": 1779077040471,
     "relativePath": "resources/UI/button/clock.png"
   },
   "d18943e6-0089-464f-96c4-c5fd18513de6": {
-    "asset": 1778755027915,
-    "meta": 1778755795011,
+    "asset": 1779077015772,
+    "meta": 1779077040473,
     "relativePath": "resources/UI/button/clock_backup.png"
   },
   "c4daed37-e2ca-4d05-96d7-079208c18909": {
-    "asset": 1778755027916,
-    "meta": 1778755795011,
+    "asset": 1779077015772,
+    "meta": 1779077040472,
     "relativePath": "resources/UI/button/login.png"
   },
   "e62f2d0d-2a15-4d3e-beda-cdb559871be4": {
-    "asset": 1778755027916,
-    "meta": 1778755795012,
+    "asset": 1779077015772,
+    "meta": 1779077040477,
     "relativePath": "resources/UI/button/login_btn_quickStart.png"
   },
   "c40d6ace-1979-43c1-92ba-f1260c258d45": {
-    "asset": 1778755027917,
-    "meta": 1778755795012,
+    "asset": 1779077015773,
+    "meta": 1779077040476,
     "relativePath": "resources/UI/button/login_yk.png"
   },
   "6a499af6-22cf-4881-85ed-6f858fb1c1e4": {
-    "asset": 1778755027917,
-    "meta": 1778755795018,
+    "asset": 1779077015773,
+    "meta": 1779077040477,
     "relativePath": "resources/UI/button/qiangzhuang.png"
   },
   "0e05af8f-40cf-4fb2-9ec5-a553fde15a0a": {
-    "asset": 1778755027918,
-    "meta": 1778755795019,
+    "asset": 1779077015773,
+    "meta": 1779077040482,
     "relativePath": "resources/UI/button/shiwan.png"
   },
   "065de19b-f1c7-4c46-9304-68a9905ff0c0": {
-    "asset": 1778755027928,
-    "meta": 1778755795021,
+    "asset": 1779077015775,
+    "meta": 1779077040495,
     "relativePath": "resources/UI/headimage/qiangdizhu_0.png"
   },
   "e7730c82-5e6f-4456-948e-a8c731efca15": {
-    "asset": 1778755027926,
-    "meta": 1778755795022,
+    "asset": 1779077015775,
+    "meta": 1779077040486,
     "relativePath": "resources/UI/headimage/avatar_1.png"
   },
   "55efafe5-9692-445e-b32f-70dbbe837752": {
-    "asset": 1778755027927,
-    "meta": 1778755795023,
+    "asset": 1779077015775,
+    "meta": 1779077040486,
     "relativePath": "resources/UI/headimage/avatar_4.png"
   },
   "d534ba81-600e-4919-a755-81e74236d91f": {
-    "asset": 1778755028041,
-    "meta": 1778755795028,
+    "asset": 1779077015823,
+    "meta": 1779077040569,
     "relativePath": "scripts/ddz/tournament/TournamentFinalRankDialog.js"
   },
   "b64d2c0a-22a2-40b7-b1a7-792615467769": {
-    "asset": 1778755028042,
-    "meta": 1778755795028,
+    "asset": 1779077015824,
+    "meta": 1779077040570,
     "relativePath": "scripts/ddz/tournament/TournamentWaitingScene.js"
   },
   "02668fd5-730a-43af-ae4c-aa636b7aca4a": {
-    "asset": 1778755027928,
-    "meta": 1778755795026,
+    "asset": 1779077015776,
+    "meta": 1779077040496,
     "relativePath": "resources/UI/headimage/status_qiangdizhu_0.png"
   },
   "a2125ada-f750-4b2e-84af-9c59beed06da": {
-    "asset": 1778755028045,
-    "meta": 1778755795062,
+    "asset": 1779077015826,
+    "meta": 1779077040609,
     "relativePath": "scripts/gameScene/prefabs/player_node.js"
   },
   "fba1a8d4-44a7-4b79-b13c-4f208b7f29b1": {
-    "asset": 1778755027927,
-    "meta": 1778755795027,
+    "asset": 1779077015775,
+    "meta": 1779077040487,
     "relativePath": "resources/UI/headimage/avatar_3.png"
   },
   "7bce5cf3-a172-34e2-ab0d-12e679efdf8f": {
-    "asset": 1778755028048,
-    "meta": 1778755795069,
+    "asset": 1779077015828,
+    "meta": 1779077040616,
     "relativePath": "scripts/hallscene/prefabs_script/creatroom.js"
   },
   "f5be78de-6d50-e2fa-aaf5-3f1e277d2741": {
-    "asset": 1778755028048,
-    "meta": 1778755795075,
+    "asset": 1779077015828,
+    "meta": 1779077040623,
     "relativePath": "scripts/hallscene/prefabs_script/joinroom.js"
   },
   "3524ea13-a92b-4ba9-9878-5752b64d4cc4": {
-    "asset": 1778755027928,
-    "meta": 1778755795027,
+    "asset": 1779077015775,
+    "meta": 1779077040494,
     "relativePath": "resources/UI/headimage/img_Card_dizhu.png"
   },
   "b2c3d4e5-f678-90ab-cdef-123456789abc": {
-    "asset": 1778755028048,
-    "meta": 1778755795087,
+    "asset": 1779077015828,
+    "meta": 1779077040635,
     "relativePath": "scripts/hallscene/prefabs_script/userAgreement.js"
   },
   "bf43eae8-bc01-4a02-83f7-dcb4df303555": {
-    "asset": 1778755027926,
-    "meta": 1778755795028,
+    "asset": 1779077015775,
+    "meta": 1779077040491,
     "relativePath": "resources/UI/headimage/avatar_2.png"
   },
   "458191ca-4744-452c-82fc-23248b95d6f8": {
-    "asset": 1778755027937,
-    "meta": 1778755795094,
+    "asset": 1779077015779,
+    "meta": 1779077040641,
     "relativePath": "resources/UI/login/get_mobile_code.png"
   },
   "93f4788b-0c46-4732-a50f-1211c9a000ec": {
-    "asset": 1778755027937,
-    "meta": 1778755795096,
+    "asset": 1779077015779,
+    "meta": 1779077040642,
     "relativePath": "resources/UI/login/icon_shield.png"
   },
   "42ae1420-d323-47f3-8170-da4740f479b8": {
-    "asset": 1778755027937,
-    "meta": 1778755795096,
+    "asset": 1779077015779,
+    "meta": 1779077040642,
     "relativePath": "resources/UI/login/icon_phone.png"
   },
   "565aa9fd-dbc3-47ef-be19-4dfd65632346": {
-    "asset": 1778755027935,
-    "meta": 1778755795096,
+    "asset": 1779077015779,
+    "meta": 1779077040569,
     "relativePath": "resources/UI/login/btn_close.png"
   },
   "cc69a33a-de02-4f94-aefb-062d59b87cc4": {
-    "asset": 1778755027937,
-    "meta": 1778755795098,
+    "asset": 1779077015779,
+    "meta": 1779077040645,
     "relativePath": "resources/UI/login/icon_wechat.png"
   },
   "873bbe5e-a684-4d55-ad57-53d658f62bf6": {
-    "asset": 1778755027936,
-    "meta": 1778755795099,
+    "asset": 1779077015779,
+    "meta": 1779077040642,
     "relativePath": "resources/UI/login/btn_mobile_login.png"
   },
-  "1f816ad8-4a7d-4be4-a92f-9475f459bd82": {
-    "asset": 1778755027938,
-    "meta": 1778755795104,
-    "relativePath": "resources/UI/login/login_bg.png"
-  },
   "be9ab6a5-6f81-446c-b9dc-8f6c3971d444": {
-    "asset": 1778755027939,
-    "meta": 1778755795115,
+    "asset": 1779077015780,
+    "meta": 1779077040661,
     "relativePath": "resources/UI/login/login_bg_original.png"
   },
   "7fd8fc0e-12e6-4380-a78e-e1ab33929453": {
-    "asset": 1778755027922,
-    "meta": 1778755795119,
+    "asset": 1779077015774,
+    "meta": 1779077040570,
     "relativePath": "resources/UI/card/card.png"
   },
   "9ce034ef-b049-49b1-a2f3-2c396c7827df": {
-    "asset": 1778771733192,
-    "meta": 1778771737503,
+    "asset": 1779077015822,
+    "meta": 1779077039123,
     "relativePath": "scripts/data/socket_ctr.js"
   },
   "77743483-c5fc-49db-aada-70e9a15bdb6d": {
-    "asset": 1778760156958,
-    "meta": 1778771737913,
+    "asset": 1779077015825,
+    "meta": 1779077039708,
     "relativePath": "scripts/gameScene/gameingUI.js"
   },
   "2afe8af3-f760-4e97-b09b-41f2920a82e1": {
-    "asset": 1778760156958,
-    "meta": 1778771737941,
+    "asset": 1779077015826,
+    "meta": 1779077040582,
     "relativePath": "scripts/gameScene/prefabs/card.js"
   },
   "d2b3c4d5-e6f7-8901-abcd-ef1234567921": {
-    "asset": 1778771733193,
-    "meta": 1778771738403,
+    "asset": 1779077015826,
+    "meta": 1779077040275,
     "relativePath": "scripts/hallscene/hallScene.js"
   },
   "d96676ad-a9d0-4721-beb4-03aedb941f4b": {
-    "asset": 1778760156959,
-    "meta": 1778771738403,
+    "asset": 1779077015829,
+    "meta": 1779077038429,
     "relativePath": "scripts/mygolbal.js"
   },
   "d8d266dc-c1ec-42d8-80a9-6f26bd58ad01": {
-    "asset": 1778760156959,
-    "meta": 1778771738435,
+    "asset": 1779077015830,
+    "meta": 1779077040415,
     "relativePath": "scripts/prefabs/phone_login.js"
   },
   "d485ec82-b220-4b06-ac1e-0cced28d5421": {
-    "asset": 1778760156959,
-    "meta": 1778771738436,
+    "asset": 1779077015831,
+    "meta": 1779077040428,
     "relativePath": "scripts/util/event_lister.js"
   },
   "becf02a2-126d-4647-9820-cb042af8a670": {
-    "asset": 1778771733192,
-    "meta": 1778771738452,
+    "asset": 1779077015823,
+    "meta": 1779077040516,
     "relativePath": "scripts/ddz/tournament/ArenaEnterWaitingScene.js"
+  },
+  "fd745b55-cb0d-42a9-8271-f2c4b4b5099c": {
+    "asset": 1779077015821,
+    "meta": 1779077038426,
+    "relativePath": "scenes/ArenaMatchWaitingScene.fire"
+  },
+  "7e1cc61b-0f9c-43ce-99d5-104db2271617": {
+    "asset": 1779077015830,
+    "meta": 1779077040425,
+    "relativePath": "scripts/prefabs/user_agreement.js"
+  },
+  "38a3d0afaecf439abdfa63": {
+    "asset": 1779077015823,
+    "meta": 1779077040568,
+    "relativePath": "scripts/ddz/tournament/ArenaMatchWaitingScene.js"
+  },
+  "1f816ad8-4a7d-4be4-a92f-9475f459bd82": {
+    "asset": 1779071278660,
+    "meta": 1779077948879,
+    "relativePath": "resources/UI/login/login_bg.png"
+  },
+  "9c8930e9-b884-4ad0-9ad5-e647ed508951": {
+    "asset": 1779078121719,
+    "meta": 1779078144115,
+    "relativePath": "resources/UI/login/login_close.webp"
+  },
+  "a89fc25f-64f2-46e2-a633-c9a7f563ebe6": {
+    "asset": 1779079470268,
+    "meta": 1779079470281,
+    "relativePath": "resources/UI/login/btn_bj.png"
+  },
+  "d94c6f60-f2c6-4d61-8666-19df77fa455f": {
+    "asset": 1779080834951,
+    "meta": 1779080834968,
+    "relativePath": "resources/UI/login/icon_wx.png"
+  },
+  "45696e40-39b8-445d-8b68-0b9c9326e2e7": {
+    "asset": 1779081253285,
+    "meta": 1779081318630,
+    "relativePath": "resources/UI/login/btn_getcode.png"
+  },
+  "b05a6f20-48ea-415a-bf1d-76f4f4dc9a63": {
+    "asset": 1779082777085,
+    "meta": 1779082816120,
+    "relativePath": "scripts/loginscene/loginScene.js"
   }
 }

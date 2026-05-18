@@ -121,7 +121,7 @@
   "mainIsRemote": false,
   "optimizeHotUpdate": false,
   "nativeMd5Cache": true,
-  "encryptJs": true,
+  "encryptJs": false,
   "xxteaKey": "4421aa99-d657-48",
   "zipCompressJs": false,
   "fb-instant-games": {},

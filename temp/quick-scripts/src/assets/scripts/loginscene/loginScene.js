@@ -241,6 +241,12 @@ var _createNativeInputElements = function _createNativeInputElements(panel, phon
     phoneInput.type = 'tel';
     phoneInput.placeholder = '请输入手机号';
     phoneInput.maxLength = 11;
+    phoneInput.setAttribute('autocomplete', 'off'); // 🔧【修复】禁用浏览器自动填充历史记录
+
+    phoneInput.setAttribute('autocapitalize', 'off'); // 禁用自动大写
+
+    phoneInput.setAttribute('autocorrect', 'off'); // 禁用自动纠正
+
     phoneInput.style.cssText = ['position: absolute', 'left: ' + phoneScreen.left + 'px', 'top: ' + phoneScreen.top + 'px', 'width: ' + phoneScreen.width + 'px', 'height: ' + phoneScreen.height + 'px', 'background: transparent', 'border: none', 'border-radius: 0', 'font-size: 12px', 'color: #333', 'padding: 0 8px', 'box-sizing: border-box', 'outline: none', 'pointer-events: auto', 'z-index: 100000', 'cursor: text', 'font-family: Arial, "Microsoft YaHei", sans-serif', 'line-height: ' + phoneScreen.height + 'px', 'text-align: left'].join('; ');
     container.appendChild(phoneInput); // 创建验证码输入框
 
@@ -249,6 +255,12 @@ var _createNativeInputElements = function _createNativeInputElements(panel, phon
     codeInput.type = 'text';
     codeInput.placeholder = '验证码';
     codeInput.maxLength = 6;
+    codeInput.setAttribute('autocomplete', 'off'); // 🔧【修复】禁用浏览器自动填充历史记录
+
+    codeInput.setAttribute('autocapitalize', 'off'); // 禁用自动大写
+
+    codeInput.setAttribute('autocorrect', 'off'); // 禁用自动纠正
+
     codeInput.style.cssText = ['position: absolute', 'left: ' + codeScreen.left + 'px', 'top: ' + codeScreen.top + 'px', 'width: ' + codeScreen.width + 'px', 'height: ' + codeScreen.height + 'px', 'background: transparent', 'border: none', 'border-radius: 0', 'font-size: 12px', 'color: #333', 'padding: 0 8px', 'box-sizing: border-box', 'outline: none', 'pointer-events: auto', 'z-index: 100000', 'cursor: text', 'font-family: Arial, "Microsoft YaHei", sans-serif', 'line-height: ' + codeScreen.height + 'px', 'text-align: left'].join('; ');
     container.appendChild(codeInput); // 添加焦点事件调试
 
@@ -510,6 +522,13 @@ cc.Class({
       this._initLoginButtons();
     } catch (e) {
       console.error("初始化登录按钮时出错:", e);
+    }
+
+    try {
+      // 初始化场景中预置的手机登录弹窗（login 节点）
+      this._initPhoneLoginPopup();
+    } catch (e) {
+      console.error("初始化手机登录弹窗时出错:", e);
     }
 
     try {
@@ -1139,869 +1158,641 @@ cc.Class({
     this._showPhoneLoginPopup();
   },
   _showPhoneLoginPopup: function _showPhoneLoginPopup() {
-    var self = this;
     console.log(">>> _showPhoneLoginPopup 被调用");
-    console.log(">>> phone_login_prefab:", this.phone_login_prefab ? "存在" : "不存在");
 
-    if (this.phone_login_prefab) {
-      this._createPhoneLoginPopup(this.phone_login_prefab);
-    } else {
-      console.log(">>> 动态加载 prefabs/phone_login");
-      cc.resources.load("prefabs/phone_login", cc.Prefab, function (err, prefab) {
-        if (!cc.isValid(self.node)) return;
-
-        if (err) {
-          console.error("加载 phone_login prefab 失败:", err);
-
-          self._showError("无法显示登录弹窗");
-
-          return;
-        }
-
-        console.log(">>> phone_login prefab 加载成功");
-
-        self._createPhoneLoginPopup(prefab);
-      });
-    }
+    this._createPhoneLoginPopup();
   },
-  _createPhoneLoginPopup: function _createPhoneLoginPopup(prefab) {
-    console.log(">>> _createPhoneLoginPopup 被调用"); // 动态创建弹窗（使用正确的背景图和尺寸）
+  _createPhoneLoginPopup: function _createPhoneLoginPopup() {
+    console.log(">>> _createPhoneLoginPopup 被调用");
 
     try {
-      console.log(">>> 开始动态创建登录弹窗");
-
       var popup = this._createPhoneLoginDynamic();
 
-      console.log(">>> 登录弹窗创建完成:", popup ? popup.name : "null");
+      console.log(">>> 登录弹窗显示完成:", popup ? popup.name : "null");
       this._phoneLoginPopup = popup;
     } catch (e) {
-      console.error("创建手机登录弹窗失败:", e);
+      console.error("显示手机登录弹窗失败:", e);
 
-      this._showError("无法显示登录弹窗: " + e.message); // 🔧 修复：创建失败时重置标志位，允许下次点击重试
-
+      this._showError("无法显示登录弹窗: " + e.message);
 
       this._phoneLoginPopupShowing = false;
     }
   },
-  // 动态创建手机登录弹窗 - 使用正确的背景图和尺寸
-  _createPhoneLoginDynamic: function _createPhoneLoginDynamic() {
-    var self = this; // ==================== 弹窗尺寸（固定尺寸，与图片匹配）====================
-    // 使用固定尺寸：宽度520px，高度680px（与login_bg.png图片尺寸一致）
-    // 在小屏幕上自动缩放
+  // 初始化场景中预置的 login 弹窗节点与事件（仅执行一次）
+  _initPhoneLoginPopup: function _initPhoneLoginPopup() {
+    var self = this;
+    var popup = this.node.getChildByName("login");
 
-    var winW = cc.winSize.width;
-    var winH = cc.winSize.height; // 图片原始尺寸 - 调宽弹窗
-
-    var imgWidth = 580; // 原来是520，增加到580
-
-    var imgHeight = 680; // 如果屏幕太小，按比例缩小
-
-    var scale = 1.0;
-
-    if (winW < imgWidth + 40) {
-      scale = (winW - 40) / imgWidth;
+    if (!popup) {
+      console.error("login 弹窗节点未找到，请在 loginScene 中创建 login 节点");
+      return;
     }
 
-    var panelWidth = imgWidth * scale;
-    var panelHeight = imgHeight * scale;
-    console.log("登录弹窗尺寸: " + panelWidth + " x " + panelHeight + ", 缩放比例: " + scale); // ==================== 弹窗根节点 ====================
+    popup.active = false;
 
-    var popup = new cc.Node("LoginDialog");
-    popup.parent = this.node;
-    popup.setContentSize(cc.size(winW, winH));
-    popup.setPosition(0, 0);
-    popup.zIndex = 1000; // 添加 BlockInputEvents 组件阻止底层点击
+    if (!popup.getComponent(cc.BlockInputEvents)) {
+      popup.addComponent(cc.BlockInputEvents);
+    }
 
-    popup.addComponent(cc.BlockInputEvents); // ==================== 半透明背景遮罩 ====================
+    var panel = popup.getChildByName("login_bg") || popup;
+    var closeBtn = popup.getChildByName("closeBtn");
+    var phoneInputNode = popup.getChildByName("login_phone");
+    var codeInputNode = popup.getChildByName("login_code");
+    var getCodeBtn = popup.getChildByName("get_mobile_code");
+    var loginBtn = popup.getChildByName("btn_mobile_login");
+    var wxBtn = popup.getChildByName("icon_wx");
+    var tipNode = popup.getChildByName("tip");
+    var phoneEditBox = phoneInputNode ? phoneInputNode.getComponent(cc.EditBox) : null;
+    var codeEditBox = codeInputNode ? codeInputNode.getComponent(cc.EditBox) : null;
 
-    var mask = new cc.Node("Mask");
-    mask.parent = popup;
-    mask.setContentSize(cc.size(winW, winH));
-    mask.setPosition(0, 0);
-    var maskSprite = mask.addComponent(cc.Sprite);
-    maskSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-    mask.color = new cc.Color(0, 0, 0);
-    mask.opacity = 150; // 🔧 修复：点击遮罩层关闭弹窗
+    if (phoneEditBox) {
+      phoneEditBox.maxLength = 11;
+      phoneEditBox.inputMode = cc.EditBox.InputMode.PHONE_NUMBER;
+    }
 
-    mask.on(cc.Node.EventType.TOUCH_END, function () {
-      console.log(">>> 点击遮罩层关闭弹窗"); // 重置标志位
+    if (codeEditBox) {
+      codeEditBox.maxLength = 6;
+      codeEditBox.inputMode = cc.EditBox.InputMode.NUMERIC;
+    }
 
-      self._phoneLoginPopupShowing = false; // 清理原生 HTML input 元素
+    var getCodeBtnComp = getCodeBtn ? getCodeBtn.getComponent(cc.Button) : null;
+    var btnLabelNode = getCodeBtn ? getCodeBtn.getChildByName("btnlabel") : null;
+    var countdownLabelNode = getCodeBtn ? getCodeBtn.getChildByName("countdownlabel") : null;
+    var btnLabelComp = btnLabelNode ? btnLabelNode.getComponent(cc.Label) : null;
+    var countdownLabelComp = countdownLabelNode ? countdownLabelNode.getComponent(cc.Label) : null;
+    var tipLabelComp = tipNode ? tipNode.getComponent(cc.Label) : null;
 
-      if (cc.sys.isBrowser) {
-        var container = document.getElementById('native-input-container');
+    if (countdownLabelNode) {
+      countdownLabelNode.active = false;
+    }
 
-        if (container) {
-          container.remove();
+    if (tipNode) {
+      tipNode.active = false;
+    }
+
+    this._phoneLoginUI = {
+      popup: popup,
+      panel: panel,
+      closeBtn: closeBtn,
+      phoneInputNode: phoneInputNode,
+      codeInputNode: codeInputNode,
+      phoneEditBox: phoneEditBox,
+      codeEditBox: codeEditBox,
+      getCodeBtn: getCodeBtn,
+      getCodeBtnComp: getCodeBtnComp,
+      loginBtn: loginBtn,
+      wxBtn: wxBtn,
+      tipNode: tipNode,
+      tipLabelComp: tipLabelComp,
+      btnLabelNode: btnLabelNode,
+      btnLabelComp: btnLabelComp,
+      countdownLabelNode: countdownLabelNode,
+      countdownLabelComp: countdownLabelComp,
+      countdown: 0
+    };
+
+    if (closeBtn) {
+      closeBtn.off(cc.Node.EventType.TOUCH_END);
+      closeBtn.on(cc.Node.EventType.TOUCH_END, function () {
+        self._closePhoneLoginPopup();
+      }, this);
+    }
+
+    if (getCodeBtn) {
+      getCodeBtn.off(cc.Node.EventType.TOUCH_END);
+      getCodeBtn.on(cc.Node.EventType.TOUCH_END, function () {
+        self._onPhoneLoginGetCode();
+      }, this);
+    }
+
+    if (loginBtn) {
+      loginBtn.off(cc.Node.EventType.TOUCH_END);
+      loginBtn.on(cc.Node.EventType.TOUCH_END, function () {
+        self._onPhoneLoginSubmit();
+      }, this);
+    }
+
+    if (wxBtn) {
+      wxBtn.off(cc.Node.EventType.TOUCH_END);
+      wxBtn.on(cc.Node.EventType.TOUCH_END, function () {
+        self._onPhoneLoginWx();
+      }, this);
+    }
+  },
+  _getPhoneLoginInputValue: function _getPhoneLoginInputValue(inputId, editBox) {
+    if (cc.sys.isBrowser) {
+      var input = document.getElementById(inputId);
+      return input ? input.value : "";
+    }
+
+    return editBox ? editBox.string || "" : "";
+  },
+  _validatePhoneLoginPhone: function _validatePhoneLoginPhone(phone) {
+    if (!phone || phone.length !== 11) return false;
+    return /^1[3-9]\d{9}$/.test(phone);
+  },
+  _showPhoneLoginTip: function _showPhoneLoginTip(msg, isError) {
+    var ui = this._phoneLoginUI;
+    if (!ui || !ui.tipNode || !ui.tipLabelComp) return;
+    ui.tipNode.active = true;
+    ui.tipLabelComp.string = msg;
+    ui.tipNode.color = isError ? new cc.Color(255, 80, 80) : new cc.Color(100, 200, 100);
+  },
+  _resetPhoneLoginCountdownUI: function _resetPhoneLoginCountdownUI() {
+    var ui = this._phoneLoginUI;
+    if (!ui) return;
+    ui.countdown = 0;
+    if (ui.getCodeBtnComp) ui.getCodeBtnComp.interactable = true;
+    if (ui.getCodeBtn) ui.getCodeBtn.opacity = 255;
+    if (ui.btnLabelNode) ui.btnLabelNode.active = true;
+
+    if (ui.countdownLabelNode) {
+      ui.countdownLabelNode.active = false;
+      if (ui.countdownLabelComp) ui.countdownLabelComp.string = "";
+    }
+  },
+  _startPhoneLoginCountdown: function _startPhoneLoginCountdown() {
+    var self = this;
+    var ui = this._phoneLoginUI;
+    if (!ui) return;
+    ui.countdown = 60;
+    if (ui.getCodeBtnComp) ui.getCodeBtnComp.interactable = false;
+    if (ui.getCodeBtn) ui.getCodeBtn.opacity = 150;
+    if (ui.btnLabelNode) ui.btnLabelNode.active = false;
+    if (ui.countdownLabelNode) ui.countdownLabelNode.active = true;
+
+    var tick = function tick() {
+      if (!self._phoneLoginUI || !cc.isValid(self._phoneLoginUI.popup)) return;
+      var cur = self._phoneLoginUI;
+      cur.countdown--;
+
+      if (cur.countdown <= 0) {
+        self._resetPhoneLoginCountdownUI();
+      } else {
+        if (cur.countdownLabelComp) {
+          cur.countdownLabelComp.string = cur.countdown + "s";
         }
-      } // 关闭动画
 
-
-      cc.tween(panel).to(0.15, {
-        scale: 0.8,
-        opacity: 0
-      }, {
-        easing: 'backIn'
-      }).call(function () {
-        if (cc.isValid(popup)) {
-          popup.destroy();
-        }
-      }).start();
-    }, this); // ==================== 弹窗面板 ====================
-
-    var panel = new cc.Node("Panel");
-    panel.parent = popup;
-    panel.setContentSize(cc.size(panelWidth, panelHeight));
-    panel.setPosition(0, 0);
-    panel.scale = 0.7;
-    panel.opacity = 0; // ==================== 弹窗背景（使用正确的 login_bg 图片）====================
-
-    var bg = new cc.Node("Bg");
-    bg.parent = panel; // 先设置一个临时尺寸
-
-    bg.setContentSize(cc.size(panelWidth, panelHeight));
-    bg.setPosition(0, 0);
-    bg.zIndex = 0; // 背景在最底层
-    // 先添加Sprite组件并设置sizeMode
-
-    var bgSprite = bg.addComponent(cc.Sprite);
-    bgSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM; // 使用自定义尺寸，不跟随图片
-
-    bgSprite.srcBlendFactor = cc.macro.BlendFactor.SRC_ALPHA;
-    bgSprite.dstBlendFactor = cc.macro.BlendFactor.ONE_MINUS_SRC_ALPHA; // 加载背景图（使用 UI/login/login_bg.png）
-
-    cc.resources.load("UI/login/login_bg", cc.SpriteFrame, function (err, spriteFrame) {
-      if (!cc.isValid(bg)) return;
-
-      if (err) {
-        console.warn("加载 login_bg 失败，使用默认背景:", err); // 降级：使用渐变背景
-
-        bg.removeComponent(cc.Sprite);
-        var bgGfx = bg.addComponent(cc.Graphics);
-        bgGfx.fillColor = new cc.Color(45, 35, 25);
-        bgGfx.roundRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight, 20);
-        bgGfx.fill();
-        return;
-      } // 设置spriteFrame
-
-
-      bgSprite.spriteFrame = spriteFrame; // 关键：再次确保尺寸正确（防止被图片尺寸覆盖）
-
-      bg.setContentSize(cc.size(panelWidth, panelHeight));
-      console.log("背景图加载成功，显示尺寸: " + bg.width + " x " + bg.height);
-    }); // ==================== 标题文字（欢乐登录）====================
-    // 金色描边，白色主体，居中，顶部距边40px
-
-    var titleNode = new cc.Node("Title");
-    titleNode.parent = panel;
-    titleNode.setPosition(0, panelHeight / 2 - 60);
-    var titleLabel = titleNode.addComponent(cc.Label);
-    titleLabel.string = "欢乐登录";
-    titleLabel.fontSize = 36;
-    titleLabel.lineHeight = 44;
-    titleLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-    titleNode.color = new cc.Color(255, 255, 255); // 金色描边
-
-    var titleOutline = titleNode.addComponent(cc.LabelOutline);
-    titleOutline.color = new cc.Color(218, 165, 32); // 金色
-
-    titleOutline.width = 3; // ==================== 关闭按钮（右上角圆形，红金色，46x46）====================
-
-    var closeBtn = new cc.Node("BtnClose");
-    closeBtn.parent = panel;
-    closeBtn.setContentSize(cc.size(46, 46));
-    closeBtn.setPosition(panelWidth / 2 - 35, panelHeight / 2 - 35); // 红金色圆形背景
-
-    var closeGfx = closeBtn.addComponent(cc.Graphics);
-    closeGfx.fillColor = new cc.Color(200, 60, 60); // 红色
-
-    closeGfx.circle(0, 0, 23);
-    closeGfx.fill();
-    closeGfx.strokeColor = new cc.Color(218, 165, 32); // 金色边框
-
-    closeGfx.lineWidth = 2;
-    closeGfx.circle(0, 0, 22);
-    closeGfx.stroke(); // X 符号
-
-    var closeX = new cc.Node("X");
-    closeX.parent = closeBtn;
-    var closeXLabel = closeX.addComponent(cc.Label);
-    closeXLabel.string = "×";
-    closeXLabel.fontSize = 28;
-    closeXLabel.lineHeight = 32;
-    closeXLabel.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-    closeX.color = new cc.Color(255, 255, 255);
-    closeBtn.on(cc.Node.EventType.TOUCH_END, function () {
-      console.log(">>> 点击关闭按钮"); // 🔧 修复：重置弹窗显示标志位
-
-      self._phoneLoginPopupShowing = false;
-      console.log(">>> 已重置 _phoneLoginPopupShowing 为 false"); // 清理原生 HTML input 元素
-
-      if (cc.sys.isBrowser) {
-        var container = document.getElementById('native-input-container');
-
-        if (container) {
-          container.remove();
-        }
-      } // 关闭动画
-
-
-      cc.tween(panel).to(0.15, {
-        scale: 0.8,
-        opacity: 0
-      }, {
-        easing: 'backIn'
-      }).call(function () {
-        if (cc.isValid(popup)) {
-          popup.destroy();
-        }
-      }).start();
-    }, this); // ==================== 表单布局参数 ====================
-    // 根据背景图login_bg.png(520x680)的精确预留位置设置元素
-    // 使用项目现有的UI资源：
-    //   icon_phone.png - 手机图标
-    //   icon_shield.png - 验证码图标
-    //   get_mobile_code.png - 获取验证码按钮
-    // 计算缩放比例（小屏幕适配）
-
-    var scaleRatio = panelWidth / 520; // 输入框尺寸
-
-    var inputWidth = 220 * scaleRatio; // 输入框宽度
-
-    var inputHeight = 45 * scaleRatio; // 输入框高度（减小）
-
-    var iconSize = 25 * scaleRatio; // 图标大小
-
-    var formY1 = 130 * scaleRatio; // 第一个输入框Y坐标（向下移动）
-
-    var formY2 = 50 * scaleRatio; // 第二个输入框Y坐标
-
-    var getCodeBtnWidth = 90 * scaleRatio; // 获取验证码按钮宽度
-
-    var btnHeight = 45 * scaleRatio; // 统一按钮高度
-
-    console.log("布局参数: scaleRatio=" + scaleRatio.toFixed(2)); // ==================== 手机号输入行 ====================
-    // 布局：[图标] [输入框] 整体居中
-
-    var phoneRowWidth = iconSize + 15 + inputWidth; // 总宽度
-
-    var phoneRowX = 0; // 整体居中
-    // 手机图标 - 放在输入框左边
-
-    var phoneIconNode = new cc.Node("PhoneIcon");
-    phoneIconNode.parent = panel;
-    phoneIconNode.setPosition(-phoneRowWidth / 2 + iconSize / 2 + 10, formY1);
-    phoneIconNode.setContentSize(cc.size(iconSize, iconSize));
-    cc.resources.load("UI/login/icon_phone", cc.SpriteFrame, function (err, spriteFrame) {
-      if (err || !cc.isValid(phoneIconNode)) return;
-      var iconSprite = phoneIconNode.addComponent(cc.Sprite);
-      iconSprite.spriteFrame = spriteFrame;
-      iconSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-    }); // ==================== 手机号输入框 ====================
-    // login_bg.png 中已包含输入框背景，只需放置透明的 EditBox
-    // 注意：由于 panel 有缩放动画，EditBox 需要在动画完成后创建，否则点击区域位置不对
-
-    var phoneInputNode = new cc.Node("PhoneInput");
-    phoneInputNode.parent = panel;
-    phoneInputNode.setContentSize(cc.size(inputWidth, inputHeight));
-    phoneInputNode.setPosition(-phoneRowWidth / 2 + iconSize + 15 + inputWidth / 2, formY1);
-    phoneInputNode.zIndex = 100;
-    var phoneEditBox = null; // 延迟创建
-    // ==================== 验证码输入行 ====================
-    // 布局：[图标] [输入框] [获取验证码按钮] 整体居中
-
-    var codeInputW = inputWidth - getCodeBtnWidth - 10; // 验证码输入框宽度
-
-    var codeRowWidth = iconSize + 5 + codeInputW + 5 + getCodeBtnWidth; // 总宽度
-    // 验证码图标
-
-    var codeIconNode = new cc.Node("CodeIcon");
-    codeIconNode.parent = panel;
-    codeIconNode.setPosition(-codeRowWidth / 2 + iconSize / 2 + 10, formY2);
-    codeIconNode.setContentSize(cc.size(iconSize, iconSize));
-    cc.resources.load("UI/login/icon_shield", cc.SpriteFrame, function (err, spriteFrame) {
-      if (err || !cc.isValid(codeIconNode)) return;
-      var iconSprite = codeIconNode.addComponent(cc.Sprite);
-      iconSprite.spriteFrame = spriteFrame;
-      iconSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-    }); // ==================== 验证码输入框 ====================
-    // login_bg.png 中已包含输入框背景，只需放置透明的 EditBox
-    // 注意：由于 panel 有缩放动画，EditBox 需要在动画完成后创建，否则点击区域位置不对
-
-    var codeInputNode = new cc.Node("CodeInput");
-    codeInputNode.parent = panel;
-    codeInputNode.setContentSize(cc.size(codeInputW, inputHeight));
-    codeInputNode.setPosition(-codeRowWidth / 2 + iconSize + 5 + codeInputW / 2, formY2);
-    codeInputNode.zIndex = 100;
-    var codeEditBox = null; // 延迟创建
-    // 获取验证码按钮
-
-    var getCodeBtn = new cc.Node("BtnGetCode");
-    getCodeBtn.parent = panel;
-    getCodeBtn.setContentSize(cc.size(getCodeBtnWidth, btnHeight));
-    getCodeBtn.setPosition(codeRowWidth / 2 - getCodeBtnWidth / 2, formY2);
-    var getCodeBtnComp = getCodeBtn.addComponent(cc.Button);
-    getCodeBtnComp.transition = cc.Button.Transition.SCALE;
-    getCodeBtnComp.zoomScale = 0.95;
-    cc.resources.load("UI/login/get_mobile_code", cc.SpriteFrame, function (err, spriteFrame) {
-      if (!cc.isValid(getCodeBtn)) return;
-
-      if (err) {
-        console.warn("加载获取验证码按钮图片失败:", err); // 降级：使用纯色按钮
-
-        var btnGfx = getCodeBtn.addComponent(cc.Graphics);
-        btnGfx.fillColor = new cc.Color(255, 165, 0);
-        btnGfx.roundRect(-getCodeBtnWidth / 2, -inputHeight / 2, getCodeBtnWidth, inputHeight, 5);
-        btnGfx.fill();
-        var btnLabel = new cc.Node("Label");
-        btnLabel.parent = getCodeBtn;
-        var labelComp = btnLabel.addComponent(cc.Label);
-        labelComp.string = "获取验证码";
-        labelComp.fontSize = 12 * scaleRatio;
-        labelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-        btnLabel.color = new cc.Color(255, 255, 255);
-        return;
+        self.scheduleOnce(tick, 1);
       }
+    };
 
-      var btnSprite = getCodeBtn.addComponent(cc.Sprite);
-      btnSprite.spriteFrame = spriteFrame;
-      btnSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-      getCodeBtn.setContentSize(cc.size(getCodeBtnWidth, btnHeight));
-    }); // 倒计时状态
+    if (ui.countdownLabelComp) {
+      ui.countdownLabelComp.string = ui.countdown + "s";
+    }
 
-    var countdown = 0;
-    var countdownLabel = null; // 开始倒计时
+    self.scheduleOnce(tick, 1);
+  },
+  _closePhoneLoginPopup: function _closePhoneLoginPopup() {
+    var self = this;
+    var ui = this._phoneLoginUI;
 
-    var startCountdown = function startCountdown() {
-      countdown = 60;
-      getCodeBtnComp.interactable = false;
-      getCodeBtn.opacity = 150;
+    if (!ui || !ui.popup || !cc.isValid(ui.popup)) {
+      this._phoneLoginPopupShowing = false;
+      return;
+    }
 
-      var tick = function tick() {
-        countdown--;
+    this._phoneLoginPopupShowing = false;
 
-        if (countdown <= 0) {
-          getCodeBtnComp.interactable = true;
-          getCodeBtn.opacity = 255;
+    _removeNativeInputElements();
 
-          if (countdownLabel) {
-            countdownLabel.string = "";
-          }
+    var panel = ui.panel;
+    var popup = ui.popup;
+
+    if (ui.phoneEditBox) {
+      ui.phoneEditBox.string = "";
+    }
+
+    if (ui.codeEditBox) {
+      ui.codeEditBox.string = "";
+    }
+
+    if (ui.tipNode) {
+      ui.tipNode.active = false;
+    }
+
+    this._resetPhoneLoginCountdownUI();
+
+    cc.tween(panel).to(0.15, {
+      scale: 0.8,
+      opacity: 0
+    }, {
+      easing: 'backIn'
+    }).call(function () {
+      if (cc.isValid(popup)) {
+        popup.active = false;
+        panel.scale = 1;
+        panel.opacity = 255;
+      }
+    }).start();
+  },
+  _onPhoneLoginGetCode: function _onPhoneLoginGetCode() {
+    var self = this;
+    var ui = this._phoneLoginUI;
+    if (!ui || ui.countdown > 0) return;
+
+    var phone = this._getPhoneLoginInputValue('native-phone-input', ui.phoneEditBox);
+
+    if (!this._validatePhoneLoginPhone(phone)) {
+      this._showPhoneLoginTip("请输入正确的手机号", true);
+
+      return;
+    }
+
+    var defines = window.defines;
+
+    if (!defines || !defines.apiUrl) {
+      this._showPhoneLoginTip("验证码已发送(测试)", false);
+
+      this._startPhoneLoginCountdown();
+
+      return;
+    }
+
+    var HttpAPI = window.HttpAPI;
+
+    if (HttpAPI && defines.cryptoKey) {
+      HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/send-code', 'send_code', {
+        phone: phone
+      }, defines.cryptoKey, function (err, resp) {
+        if (err) {
+          self._showPhoneLoginTip(err || "发送失败", true);
+
+          return;
+        }
+
+        if (resp && resp.code === 0) {
+          self._showPhoneLoginTip("验证码已发送", false);
+
+          self._startPhoneLoginCountdown();
         } else {
-          if (!countdownLabel) {
-            countdownLabel = new cc.Node("Countdown");
-            countdownLabel.parent = getCodeBtn;
-            countdownLabel.color = new cc.Color(255, 255, 255);
-            var labelComp = countdownLabel.addComponent(cc.Label);
-            labelComp.fontSize = 14 * scaleRatio;
-            labelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-          }
+          self._showPhoneLoginTip(resp.message || "发送失败", true);
+        }
+      });
+    } else {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', defines.apiUrl + '/api/v1/auth/send-code', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 10000;
 
-          countdownLabel.getComponent(cc.Label).string = countdown + "s";
-          self.scheduleOnce(tick, 1);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              var resp = JSON.parse(xhr.responseText);
+
+              if (resp.code === 0) {
+                self._showPhoneLoginTip("验证码已发送", false);
+
+                self._startPhoneLoginCountdown();
+              } else {
+                self._showPhoneLoginTip(resp.message || "发送失败", true);
+              }
+            } catch (e) {
+              self._showPhoneLoginTip("解析响应失败", true);
+            }
+          } else {
+            self._showPhoneLoginTip("网络请求失败", true);
+          }
         }
       };
 
-      self.scheduleOnce(tick, 1);
-    }; // ==================== 手机登录按钮 ====================
-    // btn_mobile_login.png 原始尺寸: 340 x 50，宽高比 6.8:1
+      xhr.send(JSON.stringify({
+        phone: phone
+      }));
+    }
+  },
+  _onPhoneLoginSubmit: function _onPhoneLoginSubmit() {
+    var self = this;
+    var ui = this._phoneLoginUI;
+    if (!ui) return;
 
+    var phone = this._getPhoneLoginInputValue('native-phone-input', ui.phoneEditBox);
 
-    var loginBtnY = formY2 - 70 * scaleRatio;
-    var loginBtnHeight = 50 * scaleRatio; // 按钮高度
+    var code = this._getPhoneLoginInputValue('native-code-input', ui.codeEditBox);
 
-    var loginBtnWidth = loginBtnHeight * 6.8; // 按图片原始比例计算宽度 (340/50=6.8)
+    if (!this._validatePhoneLoginPhone(phone)) {
+      this._showPhoneLoginTip("请输入正确的手机号", true);
 
-    var loginBtn = new cc.Node("BtnLogin");
-    loginBtn.parent = panel;
-    loginBtn.setContentSize(cc.size(loginBtnWidth, loginBtnHeight));
-    loginBtn.setPosition(0, loginBtnY); // 尝试加载按钮图片
+      return;
+    }
 
-    cc.resources.load("UI/login/btn_mobile_login", cc.SpriteFrame, function (err, spriteFrame) {
-      if (!cc.isValid(loginBtn)) return;
+    this._showPhoneLoginTip("正在登录...", false);
 
-      if (err) {
-        // 降级：使用纯色按钮
-        var loginGfx = loginBtn.addComponent(cc.Graphics);
-        loginGfx.fillColor = new cc.Color(255, 140, 0);
-        loginGfx.roundRect(-loginBtnWidth / 2, -loginBtnHeight / 2, loginBtnWidth, loginBtnHeight, 8 * scaleRatio);
-        loginGfx.fill();
-        return;
+    var defines = window.defines;
+
+    if (!defines || !defines.apiUrl) {
+      if (window.myglobal) {
+        window.myglobal.onLoginSuccess({
+          uniqueID: "phone_" + phone,
+          accountID: "phone_" + phone,
+          nickName: "玩家" + phone.substr(-4),
+          avatarUrl: "",
+          goldCount: 1000,
+          token: "test_token_" + Date.now(),
+          phone: phone,
+          loginType: 1
+        });
       }
 
-      var loginSprite = loginBtn.addComponent(cc.Sprite);
-      loginSprite.spriteFrame = spriteFrame;
-      loginSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-      loginBtn.setContentSize(cc.size(loginBtnWidth, loginBtnHeight));
-    });
-    var loginBtnComp = loginBtn.addComponent(cc.Button);
-    loginBtnComp.transition = cc.Button.Transition.SCALE;
-    loginBtnComp.zoomScale = 0.95; // ==================== 微信登录按钮 ====================
-    // icon_wechat.png 原始尺寸: 48 x 48（正方形）
+      this._showPhoneLoginTip("登录成功", false);
 
-    var wxBtnY = loginBtnY - 155 * scaleRatio; // 往下移动更多
+      this.scheduleOnce(function () {
+        _removeNativeInputElements();
 
-    var wxBtnSize = 48 * scaleRatio; // 使用图片原始尺寸 48
+        if (cc.isValid(ui.popup)) {
+          ui.popup.active = false;
+        }
 
-    var wxBtn = new cc.Node("BtnWechat");
-    wxBtn.parent = panel;
-    wxBtn.setContentSize(cc.size(wxBtnSize, wxBtnSize));
-    wxBtn.setPosition(0, wxBtnY); // 尝试加载微信图标
+        self._phoneLoginPopupShowing = false;
+        cc.director.loadScene("hallScene");
+      }, 0.5);
+      return;
+    }
 
-    cc.resources.load("UI/login/icon_wechat", cc.SpriteFrame, function (err, spriteFrame) {
-      if (!cc.isValid(wxBtn)) return;
+    var HttpAPI = window.HttpAPI;
 
-      if (err) {
-        // 降级：使用绿色圆形背景
-        var wxBgGfx = wxBtn.addComponent(cc.Graphics);
-        wxBgGfx.fillColor = new cc.Color(7, 193, 96);
-        wxBgGfx.circle(0, 0, wxBtnSize / 2);
-        wxBgGfx.fill();
-        return;
+    if (HttpAPI && defines.cryptoKey) {
+      HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/phone-login', 'phone_login', {
+        phone: phone,
+        code: code
+      }, defines.cryptoKey, function (err, resp) {
+        if (err) {
+          self._showPhoneLoginTip(err || "登录失败", true);
+
+          return;
+        }
+
+        if (resp && resp.code === 0 && resp.data) {
+          self._showPhoneLoginTip("登录成功", false);
+
+          if (window.myglobal) {
+            window.myglobal.onLoginSuccess({
+              uniqueID: resp.data.uniqueID || "",
+              accountID: resp.data.accountID || "",
+              nickName: resp.data.nickName || "玩家",
+              avatarUrl: resp.data.avatarUrl || "",
+              goldCount: resp.data.goldcount || 0,
+              token: resp.data.token || "",
+              phone: phone,
+              loginType: 1
+            });
+          }
+
+          self.scheduleOnce(function () {
+            _removeNativeInputElements();
+
+            if (cc.isValid(ui.popup)) {
+              ui.popup.active = false;
+            }
+
+            self._phoneLoginPopupShowing = false;
+            cc.director.loadScene("hallScene");
+          }, 0.5);
+        } else {
+          self._showPhoneLoginTip(resp.message || "登录失败", true);
+        }
+      });
+    } else {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', defines.apiUrl + '/api/v1/auth/phone-login', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.setRequestHeader('X-Device-ID', 'web_' + Date.now());
+      xhr.setRequestHeader('X-Device-Type', 'Web Browser');
+      xhr.timeout = 10000;
+
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              var resp = JSON.parse(xhr.responseText);
+
+              if (resp.code === 0 && resp.data) {
+                self._showPhoneLoginTip("登录成功", false);
+
+                if (window.myglobal) {
+                  window.myglobal.onLoginSuccess({
+                    uniqueID: resp.data.uniqueID || resp.data.player_id || "",
+                    accountID: resp.data.accountID || resp.data.account_id || "",
+                    nickName: resp.data.nickName || resp.data.nickname || "玩家",
+                    avatarUrl: resp.data.avatarUrl || resp.data.avatar || "",
+                    goldCount: resp.data.goldcount || resp.data.gold || 0,
+                    token: resp.data.token || "",
+                    phone: phone,
+                    loginType: 1
+                  });
+                }
+
+                self.scheduleOnce(function () {
+                  _removeNativeInputElements();
+
+                  if (cc.isValid(ui.popup)) {
+                    ui.popup.active = false;
+                  }
+
+                  self._phoneLoginPopupShowing = false;
+                  cc.director.loadScene("hallScene");
+                }, 0.5);
+              } else {
+                self._showPhoneLoginTip(resp.message || "登录失败", true);
+              }
+            } catch (e) {
+              self._showPhoneLoginTip("解析响应失败", true);
+            }
+          } else {
+            self._showPhoneLoginTip("网络请求失败", true);
+          }
+        }
+      };
+
+      xhr.send(JSON.stringify({
+        phone: phone,
+        code: code
+      }));
+    }
+  },
+  _onPhoneLoginWx: function _onPhoneLoginWx() {
+    var self = this;
+    var ui = this._phoneLoginUI;
+    if (!ui) return;
+
+    this._showPhoneLoginTip("正在登录...", false);
+
+    var defines = window.defines;
+
+    if (!defines || !defines.apiUrl) {
+      if (window.myglobal) {
+        window.myglobal.onLoginSuccess({
+          uniqueID: "wx_" + Date.now(),
+          accountID: "wx_" + Date.now(),
+          nickName: "微信用户",
+          avatarUrl: "",
+          goldCount: 1000,
+          token: "test_wx_token_" + Date.now(),
+          loginType: 2
+        });
       }
 
-      var wxSprite = wxBtn.addComponent(cc.Sprite);
-      wxSprite.spriteFrame = spriteFrame;
-      wxSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
-      wxBtn.setContentSize(cc.size(wxBtnSize, wxBtnSize));
-    });
-    var wxBtnComp = wxBtn.addComponent(cc.Button);
-    wxBtnComp.transition = cc.Button.Transition.SCALE;
-    wxBtnComp.zoomScale = 0.95; // 微信登录文字 - 隐藏
-    // var wxLabel = new cc.Node("LabelWechat");
-    // wxLabel.parent = panel;
-    // wxLabel.setPosition(0, wxBtnY - 35 * scaleRatio);
-    // var wxLabelComp = wxLabel.addComponent(cc.Label);
-    // wxLabelComp.string = "微信登录";
-    // wxLabelComp.fontSize = 12 * scaleRatio;
-    // wxLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-    // wxLabel.color = new cc.Color(100, 80, 60);
+      this._showPhoneLoginTip("登录成功", false);
 
-    console.log("按钮位置: loginBtnY=" + loginBtnY.toFixed(0) + ", wxBtnY=" + wxBtnY.toFixed(0)); // ==================== 消息提示（隐藏）====================
+      this.scheduleOnce(function () {
+        _removeNativeInputElements();
 
-    var messageLabel = new cc.Node("MessageLabel");
-    messageLabel.parent = panel;
-    messageLabel.setPosition(0, -panelHeight / 2 + 50);
-    var messageLabelComp = messageLabel.addComponent(cc.Label);
-    messageLabelComp.string = "";
-    messageLabelComp.fontSize = 14;
-    messageLabelComp.horizontalAlign = cc.Label.HorizontalAlign.CENTER;
-    messageLabel.active = false; // ==================== 弹窗进入动画 ====================
+        if (cc.isValid(ui.popup)) ui.popup.active = false;
+        self._phoneLoginPopupShowing = false;
+        cc.director.loadScene("hallScene");
+      }, 0.5);
+      return;
+    }
 
+    var HttpAPI = window.HttpAPI;
+
+    if (HttpAPI && defines.cryptoKey) {
+      HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/wx-login', 'wx_login', {
+        code: "test_code_" + Date.now()
+      }, defines.cryptoKey, function (err, resp) {
+        if (err) {
+          self._showPhoneLoginTip(err || "登录失败", true);
+
+          return;
+        }
+
+        if (resp && resp.code === 0 && resp.data) {
+          self._showPhoneLoginTip("登录成功", false);
+
+          if (window.myglobal && window.myglobal.playerData) {
+            window.myglobal.playerData.uniqueID = resp.data.uniqueID || "";
+            window.myglobal.playerData.accountID = resp.data.accountID || "";
+            window.myglobal.playerData.nickName = resp.data.nickName || "微信用户";
+            window.myglobal.playerData.userName = resp.data.username || "";
+            window.myglobal.playerData.avatar = resp.data.avatarUrl || "";
+            window.myglobal.playerData.gobal_count = resp.data.goldCount || 0;
+            window.myglobal.playerData.token = resp.data.token || "";
+            window.myglobal.playerData.saveToLocal();
+          }
+
+          if (window.myglobal && window.myglobal.socket && window.myglobal.socket.initSocket) {
+            window.myglobal.socket.initSocket();
+          }
+
+          self.scheduleOnce(function () {
+            _removeNativeInputElements();
+
+            if (cc.isValid(ui.popup)) ui.popup.active = false;
+            self._phoneLoginPopupShowing = false;
+            cc.director.loadScene("hallScene");
+          }, 0.5);
+        } else {
+          self._showPhoneLoginTip(resp.message || "登录失败", true);
+        }
+      });
+    } else {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', defines.apiUrl + '/api/v1/auth/wx-login', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.timeout = 10000;
+
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              var resp = JSON.parse(xhr.responseText);
+
+              if (resp.code === 0 && resp.data) {
+                self._showPhoneLoginTip("登录成功", false);
+
+                if (window.myglobal && window.myglobal.playerData) {
+                  window.myglobal.playerData.uniqueID = resp.data.player_id || "";
+                  window.myglobal.playerData.accountID = resp.data.account_id || "";
+                  window.myglobal.playerData.nickName = resp.data.nickname || "微信用户";
+                  window.myglobal.playerData.userName = resp.data.username || "";
+                  window.myglobal.playerData.avatar = resp.data.avatar || "";
+                  window.myglobal.playerData.gobal_count = resp.data.gold || 0;
+                  window.myglobal.playerData.token = resp.data.token || "";
+                  window.myglobal.playerData.saveToLocal();
+                }
+
+                if (window.myglobal && window.myglobal.socket && window.myglobal.socket.initSocket) {
+                  window.myglobal.socket.initSocket();
+                }
+
+                self.scheduleOnce(function () {
+                  _removeNativeInputElements();
+
+                  if (cc.isValid(ui.popup)) ui.popup.active = false;
+                  self._phoneLoginPopupShowing = false;
+                  cc.director.loadScene("hallScene");
+                }, 0.5);
+              } else {
+                self._showPhoneLoginTip(resp.message || "登录失败", true);
+              }
+            } catch (e) {
+              self._showPhoneLoginTip("解析响应失败", true);
+            }
+          } else {
+            self._showPhoneLoginTip("网络请求失败", true);
+          }
+        }
+      };
+
+      xhr.send(JSON.stringify({
+        code: "test_code_" + Date.now()
+      }));
+    }
+  },
+  // 显示场景中预置的 login 弹窗（原动态创建，现使用场景节点）
+  _createPhoneLoginDynamic: function _createPhoneLoginDynamic() {
+    var self = this;
+
+    if (!this._phoneLoginUI) {
+      this._initPhoneLoginPopup();
+    }
+
+    var ui = this._phoneLoginUI;
+
+    if (!ui || !ui.popup) {
+      throw new Error("login 弹窗未初始化");
+    }
+
+    var popup = ui.popup;
+    var panel = ui.panel;
+    var phoneInputNode = ui.phoneInputNode;
+    var codeInputNode = ui.codeInputNode;
+
+    _removeNativeInputElements();
+
+    if (ui.phoneEditBox) ui.phoneEditBox.string = "";
+    if (ui.codeEditBox) ui.codeEditBox.string = "";
+    if (ui.tipNode) ui.tipNode.active = false;
+
+    this._resetPhoneLoginCountdownUI();
+
+    var panelWidth = panel.width || 520;
+    var panelHeight = panel.height || 680;
+    var inputWidth = phoneInputNode ? phoneInputNode.width : 220;
+    var inputHeight = phoneInputNode ? phoneInputNode.height : 45;
+    var codeInputW = codeInputNode ? codeInputNode.width : 120;
+    popup.active = true;
+    popup.zIndex = 1000;
+    panel.scale = 0.7;
+    panel.opacity = 0;
     cc.tween(panel).to(0.25, {
       scale: 1,
       opacity: 255
     }, {
       easing: 'backOut'
     }).call(function () {
-      // Web 平台：直接创建原生 HTML input 元素
-      if (cc.sys.isBrowser) {
+      if (!cc.isValid(popup)) return;
+
+      if (cc.sys.isBrowser && phoneInputNode && codeInputNode) {
         _createNativeInputElements(panel, phoneInputNode, codeInputNode, inputWidth, inputHeight, codeInputW, panelWidth, panelHeight);
-      } else {
-        // 非 Web 平台：使用 Cocos EditBox
-        phoneEditBox = phoneInputNode.addComponent(cc.EditBox);
-        phoneEditBox.placeholder = "请输入手机号";
-        phoneEditBox.fontSize = 18;
-        phoneEditBox.placeholderFontSize = 14;
-        phoneEditBox.fontColor = new cc.Color(50, 50, 50, 255);
-        phoneEditBox.placeholderFontColor = new cc.Color(150, 150, 150, 255);
-        phoneEditBox.inputFlag = cc.EditBox.InputFlag.SENSITIVE;
-        phoneEditBox.inputMode = cc.EditBox.InputMode.NUMERIC;
-        phoneEditBox.maxLength = 11;
-        phoneEditBox.backgroundColor = new cc.Color(0, 0, 0, 0);
-        codeEditBox = codeInputNode.addComponent(cc.EditBox);
-        codeEditBox.placeholder = "验证码";
-        codeEditBox.fontSize = 18;
-        codeEditBox.placeholderFontSize = 14;
-        codeEditBox.fontColor = new cc.Color(50, 50, 50, 255);
-        codeEditBox.placeholderFontColor = new cc.Color(150, 150, 150, 255);
-        codeEditBox.inputFlag = cc.EditBox.InputFlag.SENSITIVE;
-        codeEditBox.inputMode = cc.EditBox.InputMode.NUMERIC;
-        codeEditBox.maxLength = 6;
-        codeEditBox.backgroundColor = new cc.Color(0, 0, 0, 0);
+      } else if (ui.phoneEditBox && ui.codeEditBox) {
+        ui.phoneEditBox.stayOnTop = true;
+        ui.codeEditBox.stayOnTop = true;
       }
 
-      console.log("输入框创建完成");
-    }).start(); // ==================== 功能逻辑 ====================
-
-    var phone = "";
-    var code = ""; // 获取输入值的辅助函数（支持原生 HTML input）
-
-    var getInputValue = function getInputValue(inputId) {
-      if (cc.sys.isBrowser) {
-        var input = document.getElementById(inputId);
-        return input ? input.value : "";
-      }
-
-      return "";
-    }; // 验证手机号
-
-
-    var validatePhone = function validatePhone(phone) {
-      if (!phone || phone.length !== 11) return false;
-      return /^1[3-9]\d{9}$/.test(phone);
-    }; // 显示消息
-
-
-    var showMessage = function showMessage(msg, isError) {
-      messageLabel.active = true;
-      messageLabelComp.string = msg;
-      messageLabel.color = isError ? new cc.Color(255, 80, 80) : new cc.Color(100, 200, 100);
-    }; // 获取验证码 - onGetCode()
-
-
-    getCodeBtn.on(cc.Node.EventType.TOUCH_END, function () {
-      // 支持原生 HTML input 或 Cocos EditBox
-      if (cc.sys.isBrowser) {
-        phone = getInputValue('native-phone-input');
-      } else if (phoneEditBox) {
-        phone = phoneEditBox.string || "";
-      }
-
-      if (!validatePhone(phone)) {
-        showMessage("请输入正确的手机号", true);
-        return;
-      }
-
-      var defines = window.defines;
-
-      if (!defines || !defines.apiUrl) {
-        showMessage("验证码已发送(测试)", false);
-        startCountdown();
-        return;
-      } // 使用加密请求发送验证码
-
-
-      var HttpAPI = window.HttpAPI;
-
-      if (HttpAPI && defines.cryptoKey) {
-        HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/send-code', 'send_code', {
-          phone: phone
-        }, defines.cryptoKey, function (err, resp) {
-          if (err) {
-            showMessage(err || "发送失败", true);
-            return;
-          }
-
-          if (resp && resp.code === 0) {
-            showMessage("验证码已发送", false);
-            startCountdown();
-          } else {
-            showMessage(resp.message || "发送失败", true);
-          }
-        });
-      } else {
-        // 降级：使用明文请求
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', defines.apiUrl + '/api/v1/auth/send-code', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.timeout = 10000;
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                var resp = JSON.parse(xhr.responseText);
-
-                if (resp.code === 0) {
-                  showMessage("验证码已发送", false);
-                  startCountdown();
-                } else {
-                  showMessage(resp.message || "发送失败", true);
-                }
-              } catch (e) {
-                showMessage("解析响应失败", true);
-              }
-            } else {
-              showMessage("网络请求失败", true);
-            }
-          }
-        };
-
-        xhr.send(JSON.stringify({
-          phone: phone
-        }));
-      }
-    }); // 手机登录 - onPhoneLogin()
-
-    loginBtn.on(cc.Node.EventType.TOUCH_END, function () {
-      // 支持原生 HTML input 或 Cocos EditBox
-      if (cc.sys.isBrowser) {
-        phone = getInputValue('native-phone-input');
-        code = getInputValue('native-code-input');
-      } else {
-        if (phoneEditBox) phone = phoneEditBox.string || "";
-        if (codeEditBox) code = codeEditBox.string || "";
-      }
-
-      if (!validatePhone(phone)) {
-        showMessage("请输入正确的手机号", true);
-        return;
-      }
-
-      showMessage("正在登录...", false);
-      var defines = window.defines;
-
-      if (!defines || !defines.apiUrl) {
-        // 无API配置，模拟登录成功
-        if (window.myglobal) {
-          var loginData = {
-            uniqueID: "phone_" + phone,
-            accountID: "phone_" + phone,
-            nickName: "玩家" + phone.substr(-4),
-            avatarUrl: "",
-            goldCount: 1000,
-            token: "test_token_" + Date.now(),
-            phone: phone,
-            loginType: 1
-          };
-          window.myglobal.onLoginSuccess(loginData);
-        }
-
-        showMessage("登录成功", false);
-        self.scheduleOnce(function () {
-          _removeNativeInputElements();
-
-          if (cc.isValid(popup)) {
-            popup.destroy();
-          }
-
-          cc.director.loadScene("hallScene");
-        }, 0.5);
-        return;
-      } // 使用加密请求登录
-
-
-      var HttpAPI = window.HttpAPI;
-
-      if (HttpAPI && defines.cryptoKey) {
-        HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/phone-login', 'phone_login', {
-          phone: phone,
-          code: code
-        }, defines.cryptoKey, function (err, resp) {
-          if (err) {
-            showMessage(err || "登录失败", true);
-            return;
-          }
-
-          if (resp && resp.code === 0 && resp.data) {
-            showMessage("登录成功", false); // 使用 myglobal.onLoginSuccess 保存登录状态
-
-            if (window.myglobal) {
-              var loginData = {
-                uniqueID: resp.data.uniqueID || "",
-                accountID: resp.data.accountID || "",
-                nickName: resp.data.nickName || "玩家",
-                avatarUrl: resp.data.avatarUrl || "",
-                goldCount: resp.data.goldcount || 0,
-                token: resp.data.token || "",
-                phone: phone,
-                loginType: 1
-              };
-              window.myglobal.onLoginSuccess(loginData);
-            }
-
-            self.scheduleOnce(function () {
-              _removeNativeInputElements();
-
-              if (cc.isValid(popup)) {
-                popup.destroy();
-              }
-
-              cc.director.loadScene("hallScene");
-            }, 0.5);
-          } else {
-            showMessage(resp.message || "登录失败", true);
-          }
-        });
-      } else {
-        // 降级：使用明文请求
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', defines.apiUrl + '/api/v1/auth/phone-login', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('X-Device-ID', 'web_' + Date.now());
-        xhr.setRequestHeader('X-Device-Type', 'Web Browser');
-        xhr.timeout = 10000;
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                var resp = JSON.parse(xhr.responseText);
-
-                if (resp.code === 0 && resp.data) {
-                  showMessage("登录成功", false); // 使用 myglobal.onLoginSuccess 保存登录状态
-
-                  if (window.myglobal) {
-                    var loginData = {
-                      uniqueID: resp.data.uniqueID || resp.data.player_id || "",
-                      accountID: resp.data.accountID || resp.data.account_id || "",
-                      nickName: resp.data.nickName || resp.data.nickname || "玩家",
-                      avatarUrl: resp.data.avatarUrl || resp.data.avatar || "",
-                      goldCount: resp.data.goldcount || resp.data.gold || 0,
-                      token: resp.data.token || "",
-                      phone: phone,
-                      loginType: 1
-                    };
-                    window.myglobal.onLoginSuccess(loginData);
-                  }
-
-                  self.scheduleOnce(function () {
-                    _removeNativeInputElements();
-
-                    if (cc.isValid(popup)) {
-                      popup.destroy();
-                    }
-
-                    cc.director.loadScene("hallScene");
-                  }, 0.5);
-                } else {
-                  showMessage(resp.message || "登录失败", true);
-                }
-              } catch (e) {
-                showMessage("解析响应失败", true);
-              }
-            } else {
-              showMessage("网络请求失败", true);
-            }
-          }
-        };
-
-        xhr.send(JSON.stringify({
-          phone: phone,
-          code: code
-        }));
-      }
-    }); // 微信登录 - onWechatLogin()
-
-    wxBtn.on(cc.Node.EventType.TOUCH_END, function () {
-      showMessage("正在登录...", false);
-      var defines = window.defines;
-
-      if (!defines || !defines.apiUrl) {
-        // 无API配置，模拟登录成功
-        if (window.myglobal) {
-          var loginData = {
-            uniqueID: "wx_" + Date.now(),
-            accountID: "wx_" + Date.now(),
-            nickName: "微信用户",
-            avatarUrl: "",
-            goldCount: 1000,
-            token: "test_wx_token_" + Date.now(),
-            loginType: 2
-          };
-          window.myglobal.onLoginSuccess(loginData);
-        }
-
-        showMessage("登录成功", false);
-        self.scheduleOnce(function () {
-          _removeNativeInputElements();
-
-          if (cc.isValid(popup)) {
-            popup.destroy();
-          }
-
-          cc.director.loadScene("hallScene");
-        }, 0.5);
-        return;
-      } // 使用加密请求微信登录
-
-
-      var HttpAPI = window.HttpAPI;
-
-      if (HttpAPI && defines.cryptoKey) {
-        HttpAPI.postEncrypted(defines.apiUrl + '/api/v1/auth/wx-login', 'wx_login', {
-          code: "test_code_" + Date.now()
-        }, defines.cryptoKey, function (err, resp) {
-          if (err) {
-            showMessage(err || "登录失败", true);
-            return;
-          }
-
-          if (resp && resp.code === 0 && resp.data) {
-            showMessage("登录成功", false);
-
-            if (window.myglobal && window.myglobal.playerData) {
-              window.myglobal.playerData.uniqueID = resp.data.uniqueID || "";
-              window.myglobal.playerData.accountID = resp.data.accountID || "";
-              window.myglobal.playerData.nickName = resp.data.nickName || "微信用户";
-              window.myglobal.playerData.userName = resp.data.username || "";
-              window.myglobal.playerData.avatar = resp.data.avatarUrl || "";
-              window.myglobal.playerData.gobal_count = resp.data.goldCount || 0;
-              window.myglobal.playerData.token = resp.data.token || ""; // 保存到本地存储
-
-              window.myglobal.playerData.saveToLocal();
-              console.log("【微信登录】用户数据已保存, nickName =", window.myglobal.playerData.nickName);
-            }
-
-            self.scheduleOnce(function () {
-              _removeNativeInputElements();
-
-              if (cc.isValid(popup)) {
-                popup.destroy();
-              }
-
-              cc.director.loadScene("hallScene");
-            }, 0.5);
-          } else {
-            showMessage(resp.message || "登录失败", true);
-          }
-        });
-      } else {
-        // 降级：使用明文请求
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', defines.apiUrl + '/api/v1/auth/wx-login', true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.timeout = 10000;
-
-        xhr.onreadystatechange = function () {
-          if (xhr.readyState === 4) {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                var resp = JSON.parse(xhr.responseText);
-
-                if (resp.code === 0 && resp.data) {
-                  showMessage("登录成功", false);
-
-                  if (window.myglobal && window.myglobal.playerData) {
-                    window.myglobal.playerData.uniqueID = resp.data.player_id || "";
-                    window.myglobal.playerData.accountID = resp.data.account_id || "";
-                    window.myglobal.playerData.nickName = resp.data.nickname || "微信用户";
-                    window.myglobal.playerData.userName = resp.data.username || "";
-                    window.myglobal.playerData.avatar = resp.data.avatar || "";
-                    window.myglobal.playerData.gobal_count = resp.data.gold || 0;
-                    window.myglobal.playerData.token = resp.data.token || ""; // 保存到本地存储
-
-                    window.myglobal.playerData.saveToLocal();
-                    console.log("【微信登录XHR】用户数据已保存, nickName =", window.myglobal.playerData.nickName);
-                  }
-
-                  self.scheduleOnce(function () {
-                    _removeNativeInputElements();
-
-                    if (cc.isValid(popup)) {
-                      popup.destroy();
-                    }
-
-                    cc.director.loadScene("hallScene");
-                  }, 0.5);
-                } else {
-                  showMessage(resp.message || "登录失败", true);
-                }
-              } catch (e) {
-                showMessage("解析响应失败", true);
-              }
-            } else {
-              showMessage("网络请求失败", true);
-            }
-          }
-        };
-
-        xhr.send(JSON.stringify({
-          code: "test_code_" + Date.now()
-        }));
-      }
-    });
+      console.log("手机登录弹窗输入框就绪");
+    }).start();
     return popup;
   },
   _showUserAgreementPopup: function _showUserAgreementPopup() {

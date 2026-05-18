@@ -1,0 +1,28 @@
+{
+  "__type__": "cc.SpriteFrame",
+  "content": {
+    "name": "login_close",
+    "texture": "9c8930e9-b884-4ad0-9ad5-e647ed508951",
+    "atlas": "",
+    "rect": [
+      0,
+      0,
+      665,
+      700
+    ],
+    "offset": [
+      0,
+      0
+    ],
+    "originalSize": [
+      665,
+      700
+    ],
+    "capInsets": [
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}
